@@ -43,6 +43,9 @@
     NSString *SSID;
     //连接的WIFI的IP地址
     NSString *wifiIP;
+    
+    NSString * mutableStr ;
+    NSMutableArray *stringArr;
     //连接SOCKET
     AsyncSocket *asyncSocket;
 }
@@ -51,6 +54,8 @@
 @implementation ViewController
 
 - (void)viewDidLoad {
+    mutableStr=[NSMutableString string];
+    stringArr=[NSMutableArray array];
     [super viewDidLoad];
     isConnect=false;
     [self setUpUI];
@@ -205,7 +210,10 @@
 -(void) onSocket:(AsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
     NSString* serverStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    recv.text=serverStr;
+    [stringArr addObject:serverStr];
+    
+    mutableStr=[stringArr componentsJoinedByString:@" "];
+    recv.text=mutableStr;
     NSString *str =@"客户端已收到服务器信息";
     NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
     [sock writeData:StrData withTimeout:-1 tag:0];
@@ -214,8 +222,7 @@
 
 - (void)onSocket:(AsyncSocket *)sock willDisconnectWithError:(NSError *)err
 {
-    UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"将要断开连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
-    [view show];
+    
 }
 - (void)onSocketDidDisconnect:(AsyncSocket *)sock
 {
@@ -225,7 +232,8 @@
 #pragma mark - 发送数据
 - (void)sendData
 {
-    NSString *str =send.text;
+    NSString *str=send.text;
+    send.text=@"";
     NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
     [asyncSocket writeData:StrData withTimeout:-1 tag:0];
 }
