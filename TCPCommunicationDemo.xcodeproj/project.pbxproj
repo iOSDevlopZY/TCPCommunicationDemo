@@ -284,6 +284,9 @@
 						DevelopmentTeam = 3JKB9XZMQU;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
+							com.apple.NetworkExtensions = {
+								enabled = 0;
+							};
 							com.apple.WAC = {
 								enabled = 1;
 							};
@@ -517,6 +520,7 @@
 				CODE_SIGN_ENTITLEMENTS = TCPCommunicationDemo/TCPCommunicationDemo.entitlements;
 				DEVELOPMENT_TEAM = 3JKB9XZMQU;
 				INFOPLIST_FILE = TCPCommunicationDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.medcare.TCPCommunicationDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -530,6 +534,7 @@
 				CODE_SIGN_ENTITLEMENTS = TCPCommunicationDemo/TCPCommunicationDemo.entitlements;
 				DEVELOPMENT_TEAM = 3JKB9XZMQU;
 				INFOPLIST_FILE = TCPCommunicationDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.medcare.TCPCommunicationDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";

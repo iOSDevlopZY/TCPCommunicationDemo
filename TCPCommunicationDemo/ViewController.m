@@ -169,17 +169,19 @@
 #pragma mark - 连接socket
 - (void)connectSocket
 {
+    NSLog(@"%@--------%d",infoTF.text,portTF.text.intValue);
     if((IPAddressLabel.text==nil||[IPAddressLabel.text isEqualToString:@""])||(portTF.text==nil||[portTF.text isEqualToString:@""]))
     {
         UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"错误" message:@"IP地址和端口号不能为空" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
         [view show];
     }
+ 
     else{
     asyncSocket = [[AsyncSocket alloc] initWithDelegate:self];
     NSError *err = nil;
-    if(![asyncSocket connectToHost:IPAddressLabel.text onPort:portTF.text.intValue error:&err])
+    if(![asyncSocket connectToHost:infoTF.text onPort:portTF.text.intValue error:&err])
     {
-        UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP错误" message:@"未能连接制定的IP地址和端口号" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
+                UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP错误" message:@"未能连接制定的IP地址和端口号" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
         [view show];
     }
     }
@@ -190,6 +192,8 @@
 {
     UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已成功连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
     [view show];
+    //连接成功时必须要写这个方法，否则无法接收服务器数据
+    [sock readDataWithTimeout:-1 tag:0];
    
 }
 
