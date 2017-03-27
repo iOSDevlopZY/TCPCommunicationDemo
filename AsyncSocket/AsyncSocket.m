@@ -25,8 +25,8 @@
 
 #define READQUEUE_CAPACITY	5           // Initial capacity
 #define WRITEQUEUE_CAPACITY 5           // Initial capacity
-#define READALL_CHUNKSIZE	256         // Incremental increase in buffer size
-#define WRITE_CHUNKSIZE    (1024 * 4)   // Limit on size of each write pass
+#define READALL_CHUNKSIZE	1024*1024         // Incremental increase in buffer size
+#define WRITE_CHUNKSIZE    (1024 * 1024)   // Limit on size of each write pass
 
 // AsyncSocket is RunLoop based, and is thus not thread-safe.
 // You must always access your AsyncSocket instance from the thread/runloop in which the instance is running.

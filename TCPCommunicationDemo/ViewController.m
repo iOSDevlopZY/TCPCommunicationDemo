@@ -94,7 +94,6 @@
     stausLabel.text=@"当前连接安全状态:--";
     
     recv=[[UITextView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.35, screenHeight*0.4)];
-    recv.userInteractionEnabled=false;
     recv.layer.borderWidth=1;
     recv.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
     send=[[UITextView alloc]initWithFrame:CGRectMake(screenWidth*0.55, screenHeight*0.4, screenWidth*0.35, screenHeight*0.4)];
@@ -183,6 +182,7 @@
  
     else{
     asyncSocket = [[AsyncSocket alloc] initWithDelegate:self];
+    [asyncSocket enablePreBuffering];
     NSError *err = nil;
     if(![asyncSocket connectToHost:infoTF.text onPort:portTF.text.intValue error:&err])
     {
