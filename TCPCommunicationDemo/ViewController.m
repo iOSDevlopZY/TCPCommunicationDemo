@@ -45,9 +45,11 @@
     NSString *wifiIP;
     
     NSString * mutableStr ;
-    NSMutableArray *stringArr;
+    NSMutableData *recvData;
     //连接SOCKET
     AsyncSocket *asyncSocket;
+    
+    AsyncReadPacket *readPacket;
 }
 @end
 
@@ -55,7 +57,7 @@
 
 - (void)viewDidLoad {
     mutableStr=[NSMutableString string];
-    stringArr=[NSMutableArray array];
+    recvData=[NSMutableData data];
     [super viewDidLoad];
     isConnect=false;
     [self setUpUI];
@@ -79,10 +81,12 @@
     
     infoTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 64, screenWidth*0.4, screenHeight*0.05)];
     infoTF.borderStyle=UITextBorderStyleRoundedRect;
+    infoTF.text=@"192.168.191.1";
     
     portTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 108, screenWidth*0.4, screenHeight*0.05)];
     portTF.borderStyle=UITextBorderStyleRoundedRect;
-
+    portTF.text=@"5050";
+    
     connectBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.25, screenWidth*0.6, screenHeight*0.05)];
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
     [connectBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
@@ -93,23 +97,24 @@
     stausLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.3, screenWidth*0.6, screenHeight*0.1)];
     stausLabel.text=@"当前连接安全状态:--";
     
-    recv=[[UITextView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.35, screenHeight*0.4)];
+    recv=[[UITextView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.4)];
     recv.layer.borderWidth=1;
     recv.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
-    send=[[UITextView alloc]initWithFrame:CGRectMake(screenWidth*0.55, screenHeight*0.4, screenWidth*0.35, screenHeight*0.4)];
-    send.layer.borderWidth=1;
-    send.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
-    recvLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.8, screenWidth*0.3, screenHeight*0.04)];
-    recvLabel.text=@"接受的数据";
-    sendLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.6, screenHeight*0.8, screenWidth*0.3, screenHeight*0.04)];
-    sendLabel.text=@"发送的数据";
-    sendBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.9, screenWidth*0.6, screenHeight*0.05)];
-    [sendBtn setTitle:@"发送" forState:UIControlStateNormal];
-    sendBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
-    [sendBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
-    sendBtn.layer.borderWidth=1;
-    sendBtn.layer.cornerRadius=4;
-    [sendBtn addTarget:self action:@selector(sendData) forControlEvents:UIControlEventTouchUpInside];
+//    send=[[UITextView alloc]initWithFrame:CGRectMake(screenWidth*0.55, screenHeight*0.4, screenWidth*0.35, screenHeight*0.4)];
+//    send.layer.borderWidth=1;
+//    send.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
+    recvLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.8, screenWidth*0.8, screenHeight*0.04)];
+    recvLabel.text=@"接收的数据";
+    recvLabel.textAlignment=NSTextAlignmentCenter;
+//    sendLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.6, screenHeight*0.8, screenWidth*0.3, screenHeight*0.04)];
+//    sendLabel.text=@"发送的数据";
+//    sendBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.9, screenWidth*0.6, screenHeight*0.05)];
+//    [sendBtn setTitle:@"发送" forState:UIControlStateNormal];
+//    sendBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
+//    [sendBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
+//    sendBtn.layer.borderWidth=1;
+//    sendBtn.layer.cornerRadius=4;
+//    [sendBtn addTarget:self action:@selector(sendData) forControlEvents:UIControlEventTouchUpInside];
 
     [self.view addSubview:portLabel];
     [self.view addSubview:IPAddressLabel];
@@ -118,10 +123,10 @@
     [self.view addSubview:connectBtn];
     [self.view addSubview:stausLabel];
     [self.view addSubview:recv];
-    [self.view addSubview:send];
+//    [self.view addSubview:send];
     [self.view addSubview:recvLabel];
-    [self.view addSubview:sendLabel];
-     [self.view addSubview:sendBtn];
+//    [self.view addSubview:sendLabel];
+//     [self.view addSubview:sendBtn];
 }
 #pragma mark - 检查网络
 - (void)checkNet{
@@ -139,7 +144,6 @@
 #pragma mark - 获取WIFI名称
 - (id)fetchSSIDInfo {
     NSArray *ifs = (__bridge_transfer id)CNCopySupportedInterfaces();
-    NSLog(@"Supported interfaces: %@", ifs);
     id info = nil;
     for (NSString *ifnam in ifs) {
         info = (__bridge_transfer id)CNCopyCurrentNetworkInfo((__bridge CFStringRef)ifnam);
@@ -173,7 +177,6 @@
 #pragma mark - 连接socket
 - (void)connectSocket
 {
-    NSLog(@"%@--------%d",infoTF.text,portTF.text.intValue);
     if((IPAddressLabel.text==nil||[IPAddressLabel.text isEqualToString:@""])||(portTF.text==nil||[portTF.text isEqualToString:@""]))
     {
         UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"错误" message:@"IP地址和端口号不能为空" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
@@ -189,6 +192,11 @@
                 UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP错误" message:@"未能连接制定的IP地址和端口号" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
         [view show];
     }
+    else
+    {
+        [connectBtn setTitle:@"连接中" forState:UIControlStateNormal];
+        [connectBtn setEnabled:false];
+    }
     }
 }
 
@@ -197,8 +205,12 @@
 {
     UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已成功连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
     [view show];
+    [connectBtn setTitle:@"已连接" forState:UIControlStateNormal];
+    [connectBtn setEnabled:false];
     //连接成功时必须要写这个方法，否则无法接收服务器数据
+
     [sock readDataWithTimeout:-1 tag:0];
+
    
 }
 
@@ -209,32 +221,51 @@
 }
 -(void) onSocket:(AsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
-    NSString* serverStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    [stringArr addObject:serverStr];
     
-    mutableStr=[stringArr componentsJoinedByString:@" "];
-    recv.text=mutableStr;
-    NSString *str =@"客户端已收到服务器信息";
+   
+    [recvData appendData:data];
+    //Byte *receiverByte =(Byte*)[recvData bytes];
+    NSLog(@"////////////////////////////////////////////////////%lu",(unsigned long)recvData.length);
+    NSString *reloadStr=[[NSString alloc]initWithData:recvData encoding:NSUTF8StringEncoding];
+    NSLog(@"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\%@",reloadStr);
+    
+   
+    
+    
+    //回执
+    NSString *str =@"Client Has Received Message";
     NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
+    
+    
     [sock writeData:StrData withTimeout:-1 tag:0];
     [sock readDataWithTimeout:-1 tag:0];
+   
 }
 
 - (void)onSocket:(AsyncSocket *)sock willDisconnectWithError:(NSError *)err
 {
-    
+    NSString *str =@"Client Will disconnected With Error";
+    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
+    [sock writeData:StrData withTimeout:-1 tag:0];
+    [sock readDataWithTimeout:-1 tag:0];
 }
 - (void)onSocketDidDisconnect:(AsyncSocket *)sock
 {
+    NSString *str =@"Client Did disconnected";
+    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
+    [sock writeData:StrData withTimeout:-1 tag:0];
+    [sock readDataWithTimeout:-1 tag:0];
     UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已断开连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
     [view show];
+    [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
+    [connectBtn setEnabled:true];
 }
-#pragma mark - 发送数据
-- (void)sendData
-{
-    NSString *str=send.text;
-    send.text=@"";
-    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
-    [asyncSocket writeData:StrData withTimeout:-1 tag:0];
-}
+//#pragma mark - 发送数据
+//- (void)sendData
+//{
+//    NSString *str=send.text;
+//    send.text=@"";
+//    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
+//    [asyncSocket writeData:StrData withTimeout:-1 tag:0];
+//}
 @end
