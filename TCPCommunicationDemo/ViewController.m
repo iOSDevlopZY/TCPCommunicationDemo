@@ -179,8 +179,8 @@
     [self.view addSubview:pngBtn];
     [self.view addSubview:jpegBtn];
     [self.view addSubview:tableView1];
-     [self.view addSubview:tableView2];
-     [self.view addSubview:tableView3];
+    [self.view addSubview:tableView2];
+    [self.view addSubview:tableView3];
 
 }
 
