@@ -46,6 +46,11 @@
     
     NSString * mutableStr ;
     NSMutableData *recvData;
+    
+    //文件类型
+    int FileType;
+    NSString *fileType;
+    int Length;
     //连接SOCKET
     AsyncSocket *asyncSocket;
     
@@ -224,20 +229,39 @@
     
    
     [recvData appendData:data];
-    //Byte *receiverByte =(Byte*)[recvData bytes];
-    NSLog(@"////////////////////////////////////////////////////%lu",(unsigned long)recvData.length);
-    NSString *reloadStr=[[NSString alloc]initWithData:recvData encoding:NSUTF8StringEncoding];
-    NSLog(@"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\%@",reloadStr);
+    NSLog(@"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX%lu",(unsigned long)recvData.length);
+    //获取数据包文件类型
+    NSData *fileTypeData=[recvData subdataWithRange:NSMakeRange(0,4)];
+    Byte *byte=(Byte*)[fileTypeData bytes];
+    FileType = [self byteToInt: byte offset:0];
     
-   
+    if(FileType==0)
+    {
+        fileType=@"文本文件";
+    }
+    else
+    {
+        fileType=@"图像文件";
+    }
+    //获取数据包长度
+    NSData *fileLengthData=[recvData subdataWithRange:NSMakeRange(4, 4)];
+    Byte *byte1=(Byte*)[fileLengthData bytes];
+    Length = [self byteToInt: byte1 offset:0];
+    recv.text=[NSString stringWithFormat:@"文件类型:%@,字节长度:%dB",fileType,Length];
     
-    
-    //回执
+    //数据包接受完毕发送回执
+    if(recvData.length==Length)
+    {
     NSString *str =@"Client Has Received Message";
     NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
-    
-    
     [sock writeData:StrData withTimeout:-1 tag:0];
+    
+    //清空recvData
+    [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
+    [recvData setLength:0];
+   
+        
+    }
     [sock readDataWithTimeout:-1 tag:0];
    
 }
@@ -260,12 +284,13 @@
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
     [connectBtn setEnabled:true];
 }
-//#pragma mark - 发送数据
-//- (void)sendData
-//{
-//    NSString *str=send.text;
-//    send.text=@"";
-//    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
-//    [asyncSocket writeData:StrData withTimeout:-1 tag:0];
-//}
+-(int)byteToInt:(Byte*)byteArr offset:(int)offset
+{
+    int value;
+    value =       (int) ((byteArr[offset]   & 0xFF)
+                         | ((byteArr[offset+1] & 0xFF)<<8)
+                         | ((byteArr[offset+2] & 0xFF)<<16)
+                         | ((byteArr[offset+3] & 0xFF)<<24));
+    return value;
+}
 @end
