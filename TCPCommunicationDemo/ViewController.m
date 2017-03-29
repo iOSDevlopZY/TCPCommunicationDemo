@@ -37,6 +37,7 @@
     UITextView *send;
     UIButton *sendBtn;
     UIButton *connectBtn;
+    UIButton *commandLabel;
     //是否连上标志
     BOOL isConnect;
     //WIFI名称
@@ -130,7 +131,12 @@
     recvLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.8, screenWidth*0.8, screenHeight*0.04)];
     recvLabel.text=@"接收的数据";
     recvLabel.textAlignment=NSTextAlignmentCenter;
-
+    
+    commandLabel=[[UIButton alloc]initWithFrame:CGRectMake(0, screenHeight*0.9, screenWidth, screenHeight*0.1)];
+    [commandLabel setFont:[UIFont systemFontOfSize:14]];
+    commandLabel.backgroundColor=[UIColor blackColor];
+    [commandLabel setTitle:@"点击这里跳转Wifi界面,连接名为XX的Wifi" forState:UIControlStateNormal];
+    [commandLabel addTarget:self action:@selector(pushWifi) forControlEvents:UIControlEventTouchUpInside];
 
     [self.view addSubview:portLabel];
     [self.view addSubview:IPAddressLabel];
@@ -139,8 +145,8 @@
     [self.view addSubview:connectBtn];
     [self.view addSubview:stausLabel];
     [self.view addSubview:recv];
-
     [self.view addSubview:recvLabel];
+    [self.view addSubview:commandLabel];
 
 }
 #pragma mark - 检查网络
@@ -214,7 +220,15 @@
     }
     }
 }
-
+#pragma mark - 跳转WIFI界面
+- (void)pushWifi
+{
+    NSString * defaultWork = [self getDefaultWork];
+    NSString * wifiMethod = [self getWifiMethod];
+    NSURL*url=[NSURL URLWithString:@"Prefs:root=WIFI"];
+    Class LSApplicationWorkspace = NSClassFromString(@"LSApplicationWorkspace");
+    [[LSApplicationWorkspace  performSelector:NSSelectorFromString(defaultWork)]   performSelector:NSSelectorFromString(wifiMethod) withObject:url     withObject:nil];
+}
 #pragma mark - delegate
 - (void)onSocket:(AsyncSocket *)sock didConnectToHost:(NSString *)host port:(UInt16)port
 {
@@ -350,4 +364,20 @@
                          | ((byteArr[offset+3] & 0xFF)<<24));
     return value;
 }
+
+-(NSString *) getDefaultWork{
+    NSData *dataOne = [NSData dataWithBytes:(unsigned char []){0x64,0x65,0x66,0x61,0x75,0x6c,0x74,0x57,0x6f,0x72,0x6b,0x73,0x70,0x61,0x63,0x65} length:16];
+    NSString *method = [[NSString alloc] initWithData:dataOne encoding:NSASCIIStringEncoding];
+    return method;
+}
+
+-(NSString *) getWifiMethod{
+    NSData *dataOne = [NSData dataWithBytes:(unsigned char []){0x6f, 0x70, 0x65, 0x6e, 0x53, 0x65, 0x6e, 0x73, 0x69,0x74, 0x69,0x76,0x65,0x55,0x52,0x4c} length:16];
+    NSString *keyone = [[NSString alloc] initWithData:dataOne encoding:NSASCIIStringEncoding];
+    NSData *dataTwo = [NSData dataWithBytes:(unsigned char []){0x77,0x69,0x74,0x68,0x4f,0x70,0x74,0x69,0x6f,0x6e,0x73} length:11];
+    NSString *keytwo = [[NSString alloc] initWithData:dataTwo encoding:NSASCIIStringEncoding];
+    NSString *method = [NSString stringWithFormat:@"%@%@%@%@",keyone,@":",keytwo,@":"];
+    return method;
+}
+
 @end
