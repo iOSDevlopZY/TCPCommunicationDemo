@@ -50,7 +50,7 @@
 			<string></string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>prefs</string>
+				<string>Prefs</string>
 			</array>
 		</dict>
 	</array>

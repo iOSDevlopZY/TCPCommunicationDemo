@@ -23,21 +23,27 @@
 
 #define screenWidth [UIScreen mainScreen].bounds.size.width
 #define screenHeight [UIScreen mainScreen].bounds.size.height
-@interface ViewController ()
+@interface ViewController ()<UITableViewDelegate,UITableViewDataSource>
 {
     UILabel *portLabel;
     UILabel *IPAddressLabel;
-    UILabel *stausLabel;
-    UILabel *recvLabel;
-    UILabel *sendLabel;
+    
+    
+
     NSTimer *timer;
     UITextField *infoTF;
     UITextField *portTF;
-    UITextView *recv;
-    UITextView *send;
-    UIButton *sendBtn;
     UIButton *connectBtn;
     UIButton *commandLabel;
+    
+    UIButton *txtBtn;
+    UIButton *pngBtn;
+    UIButton *jpegBtn;
+    
+    
+    UITableView *tableView1;
+    UITableView *tableView2;
+    UITableView *tableView3;
     //是否连上标志
     BOOL isConnect;
     //WIFI名称
@@ -121,33 +127,84 @@
     connectBtn.layer.cornerRadius=4;
     connectBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
     [connectBtn addTarget:self action:@selector(connectSocket) forControlEvents:UIControlEventTouchUpInside];
-    stausLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.3, screenWidth*0.6, screenHeight*0.1)];
-    stausLabel.text=@"当前连接安全状态:--";
-    
-    recv=[[UITextView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.4)];
-    recv.layer.borderWidth=1;
-    recv.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
 
-    recvLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.8, screenWidth*0.8, screenHeight*0.04)];
-    recvLabel.text=@"接收的数据";
-    recvLabel.textAlignment=NSTextAlignmentCenter;
+    txtBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.35, screenWidth*0.2, screenHeight*0.03)];
+    [txtBtn addTarget:self action:@selector(click:) forControlEvents:UIControlEventTouchUpInside];
+    txtBtn.tag=0;
+    [txtBtn setTitle:@"txt" forState:UIControlStateNormal];
+    [txtBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
+    pngBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.4, screenHeight*0.35, screenWidth*0.2, screenHeight*0.03)];
+    [pngBtn addTarget:self action:@selector(click:) forControlEvents:UIControlEventTouchUpInside];
+    pngBtn.tag=1;
+    [pngBtn setTitle:@"png" forState:UIControlStateNormal];
+    [pngBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
+    jpegBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.7, screenHeight*0.35, screenWidth*0.2, screenHeight*0.03)];
+    [jpegBtn addTarget:self action:@selector(click:) forControlEvents:UIControlEventTouchUpInside];
+    jpegBtn.tag=2;
+    [jpegBtn setTitle:@"jpeg" forState:UIControlStateNormal];
+    [jpegBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
     
     commandLabel=[[UIButton alloc]initWithFrame:CGRectMake(0, screenHeight*0.9, screenWidth, screenHeight*0.1)];
     [commandLabel setFont:[UIFont systemFontOfSize:14]];
     commandLabel.backgroundColor=[UIColor blackColor];
     [commandLabel setTitle:@"点击这里跳转Wifi界面,连接名为XX的Wifi" forState:UIControlStateNormal];
     [commandLabel addTarget:self action:@selector(pushWifi) forControlEvents:UIControlEventTouchUpInside];
-
+    
+    
+    
+    tableView1=[[UITableView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.5)];
+    tableView2=[[UITableView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.5)];
+    tableView3=[[UITableView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.5)];
+    tableView1.tag=0;
+    tableView2.tag=1;
+    tableView3.tag=2;
+    tableView1.hidden=NO;
+    tableView2.hidden=YES;
+    tableView3.hidden=YES;
+    tableView1.delegate=self;
+    tableView1.dataSource=self;
+    tableView2.delegate=self;
+    tableView2.dataSource=self;
+    tableView3.delegate=self;
+    tableView3.dataSource=self;
+    
+    
     [self.view addSubview:portLabel];
     [self.view addSubview:IPAddressLabel];
     [self.view addSubview:infoTF];
     [self.view addSubview:portTF];
     [self.view addSubview:connectBtn];
-    [self.view addSubview:stausLabel];
-    [self.view addSubview:recv];
-    [self.view addSubview:recvLabel];
     [self.view addSubview:commandLabel];
+    [self.view addSubview:txtBtn];
+    [self.view addSubview:pngBtn];
+    [self.view addSubview:jpegBtn];
+    [self.view addSubview:tableView1];
+     [self.view addSubview:tableView2];
+     [self.view addSubview:tableView3];
 
+}
+
+#pragma mark - 切换按钮点击事件
+- (void)click:(UIButton*)btn
+{
+    if(btn.tag==0)
+    {
+        tableView1.hidden=NO;
+        tableView2.hidden=YES;
+        tableView3.hidden=YES;
+    }
+    else if(btn.tag==1)
+    {
+        tableView1.hidden=YES;
+        tableView2.hidden=NO;
+        tableView3.hidden=YES;
+    }
+    else
+    {
+        tableView1.hidden=YES;
+        tableView2.hidden=YES;
+        tableView3.hidden=NO;
+    }
 }
 #pragma mark - 检查网络
 - (void)checkNet{
@@ -223,6 +280,7 @@
 #pragma mark - 跳转WIFI界面
 - (void)pushWifi
 {
+   
     NSString * defaultWork = [self getDefaultWork];
     NSString * wifiMethod = [self getWifiMethod];
     NSURL*url=[NSURL URLWithString:@"Prefs:root=WIFI"];
@@ -244,12 +302,12 @@
 
 - (void)onSocket:(AsyncSocket *)sock didSecure:(BOOL)flag
 {
-   stausLabel.text=@"当前连接安全状态:安全";
+  
    
 }
 -(void) onSocket:(AsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
-    
+   
    
     [recvData appendData:data];
     //获取数据包文件类型
@@ -268,7 +326,6 @@
     NSData *fileLengthData=[recvData subdataWithRange:NSMakeRange(4, 4)];
     Byte *byte1=(Byte*)[fileLengthData bytes];
     Length = [self byteToInt: byte1 offset:0];
-    recv.text=[NSString stringWithFormat:@"文件类型:%@,字节长度:%dB",fileType,Length];
     
     //数据包接受完毕发送回执
     if(recvData.length==Length)
@@ -379,5 +436,19 @@
     NSString *method = [NSString stringWithFormat:@"%@%@%@%@",keyone,@":",keytwo,@":"];
     return method;
 }
-
+#pragma mark- TableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 5;
+}
+-(UITableViewCell*)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell=[[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@""];
+    cell.textLabel.text=@"123";
+    return cell;
+}
 @end
