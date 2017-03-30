@@ -330,7 +330,7 @@
         pngImageData=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
         //获取documents目录
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadPNG%d.jpg",k]];
+        NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadPNG%d.png",k]];
         [pngImageData writeToFile:dataFile atomically:YES];
         //写入tableView
         //获取沙盒下所有文件
