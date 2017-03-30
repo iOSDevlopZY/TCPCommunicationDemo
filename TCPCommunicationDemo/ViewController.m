@@ -23,36 +23,31 @@
 
 #define screenWidth [UIScreen mainScreen].bounds.size.width
 #define screenHeight [UIScreen mainScreen].bounds.size.height
-@interface ViewController ()<UITableViewDelegate,UITableViewDataSource>
+@interface ViewController ()<UITableViewDelegate,UITableViewDataSource,UIDocumentInteractionControllerDelegate>
 {
     UILabel *portLabel;
     UILabel *IPAddressLabel;
     
-    
-
     NSTimer *timer;
+    
     UITextField *infoTF;
     UITextField *portTF;
+    
     UIButton *connectBtn;
     UIButton *commandLabel;
     
-    UIButton *txtBtn;
-    UIButton *pngBtn;
-    UIButton *jpegBtn;
+    UILabel *recommandLabel;
     
     
     UITableView *tableView1;
-    UITableView *tableView2;
-    UITableView *tableView3;
     //是否连上标志
     BOOL isConnect;
     //WIFI名称
     NSString *SSID;
     //连接的WIFI的IP地址
     NSString *wifiIP;
-    
-    NSString * mutableStr ;
     NSMutableData *recvData;
+    NSArray *fileArr;
     //文本文件数据
     NSData *textData;
     //JPEG图像文件数据
@@ -65,20 +60,35 @@
     int Length;
     //连接SOCKET
     AsyncSocket *asyncSocket;
-    
-    AsyncReadPacket *readPacket;
     //重复文件计数器
     int i;
     //重复JPEG文件计数器
     int j;
     //重复PNG文件计数器
     int k;
+  
 }
+//文件预览器
+@property(nonatomic,strong)UIDocumentInteractionController *controller;
 @end
 
 @implementation ViewController
 
 - (void)viewDidLoad {
+    
+    [self setupIndex];
+    [self initMutable];
+    //获取沙盒下所有文件
+    fileArr=[self getAllFileNames:@""];
+    [super viewDidLoad];
+    isConnect=false;
+    [self setUpUI];
+    [self checkNet];
+    
+}
+#pragma mark - 文件索引
+- (void)setupIndex
+{
     //取出txt文件索引值
     NSUserDefaults *defaults=[NSUserDefaults standardUserDefaults];
     NSString *txtIndex=[defaults objectForKey:@"txtIndex"];
@@ -89,15 +99,13 @@
     //取出png文件索引值
     NSString *pngIndex=[defaults objectForKey:@"pngIndex"];
     k=pngIndex.intValue;
-    mutableStr=[NSMutableString string];
+}
+#pragma mark - 初始化Mutable
+- (void)initMutable
+{
     recvData=[NSMutableData data];
-    [super viewDidLoad];
-    isConnect=false;
-    [self setUpUI];
-    [self checkNet];
     
 }
-
 #pragma mark - 设置UI
 - (void)setUpUI {
     //网络状态Label
@@ -128,45 +136,20 @@
     connectBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
     [connectBtn addTarget:self action:@selector(connectSocket) forControlEvents:UIControlEventTouchUpInside];
 
-    txtBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.35, screenWidth*0.2, screenHeight*0.03)];
-    [txtBtn addTarget:self action:@selector(click:) forControlEvents:UIControlEventTouchUpInside];
-    txtBtn.tag=0;
-    [txtBtn setTitle:@"txt" forState:UIControlStateNormal];
-    [txtBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
-    pngBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.4, screenHeight*0.35, screenWidth*0.2, screenHeight*0.03)];
-    [pngBtn addTarget:self action:@selector(click:) forControlEvents:UIControlEventTouchUpInside];
-    pngBtn.tag=1;
-    [pngBtn setTitle:@"png" forState:UIControlStateNormal];
-    [pngBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
-    jpegBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.7, screenHeight*0.35, screenWidth*0.2, screenHeight*0.03)];
-    [jpegBtn addTarget:self action:@selector(click:) forControlEvents:UIControlEventTouchUpInside];
-    jpegBtn.tag=2;
-    [jpegBtn setTitle:@"jpeg" forState:UIControlStateNormal];
-    [jpegBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
+    recommandLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.35, screenWidth*0.8, screenHeight*0.03)];
+    recommandLabel.text=@"应用沙盒目录下的文件";
+    recommandLabel.textAlignment=NSTextAlignmentCenter;
     
     commandLabel=[[UIButton alloc]initWithFrame:CGRectMake(0, screenHeight*0.9, screenWidth, screenHeight*0.1)];
     [commandLabel setFont:[UIFont systemFontOfSize:14]];
     commandLabel.backgroundColor=[UIColor blackColor];
     [commandLabel setTitle:@"点击这里跳转Wifi界面,连接名为XX的Wifi" forState:UIControlStateNormal];
     [commandLabel addTarget:self action:@selector(pushWifi) forControlEvents:UIControlEventTouchUpInside];
-    
-    
-    
-    tableView1=[[UITableView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.5)];
-    tableView2=[[UITableView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.5)];
-    tableView3=[[UITableView alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.4, screenWidth*0.8, screenHeight*0.5)];
-    tableView1.tag=0;
-    tableView2.tag=1;
-    tableView3.tag=2;
-    tableView1.hidden=NO;
-    tableView2.hidden=YES;
-    tableView3.hidden=YES;
+
+    tableView1=[[UITableView alloc]initWithFrame:CGRectMake(0, screenHeight*0.4, screenWidth, screenHeight*0.5)];
     tableView1.delegate=self;
     tableView1.dataSource=self;
-    tableView2.delegate=self;
-    tableView2.dataSource=self;
-    tableView3.delegate=self;
-    tableView3.dataSource=self;
+
     
     
     [self.view addSubview:portLabel];
@@ -175,36 +158,9 @@
     [self.view addSubview:portTF];
     [self.view addSubview:connectBtn];
     [self.view addSubview:commandLabel];
-    [self.view addSubview:txtBtn];
-    [self.view addSubview:pngBtn];
-    [self.view addSubview:jpegBtn];
+    [self.view addSubview:recommandLabel];
     [self.view addSubview:tableView1];
-    [self.view addSubview:tableView2];
-    [self.view addSubview:tableView3];
 
-}
-
-#pragma mark - 切换按钮点击事件
-- (void)click:(UIButton*)btn
-{
-    if(btn.tag==0)
-    {
-        tableView1.hidden=NO;
-        tableView2.hidden=YES;
-        tableView3.hidden=YES;
-    }
-    else if(btn.tag==1)
-    {
-        tableView1.hidden=YES;
-        tableView2.hidden=NO;
-        tableView3.hidden=YES;
-    }
-    else
-    {
-        tableView1.hidden=YES;
-        tableView2.hidden=YES;
-        tableView3.hidden=NO;
-    }
 }
 #pragma mark - 检查网络
 - (void)checkNet{
@@ -213,10 +169,6 @@
     {
         timer=[NSTimer timerWithTimeInterval:5 target:self selector:@selector(fetchSSIDInfo) userInfo:nil repeats:YES];
         [[NSRunLoop mainRunLoop]addTimer:timer forMode:NSDefaultRunLoopMode];
-    }
-    else
-    {
-        
     }
 }
 #pragma mark - 获取WIFI名称
@@ -288,7 +240,7 @@
     [[LSApplicationWorkspace  performSelector:NSSelectorFromString(defaultWork)]   performSelector:NSSelectorFromString(wifiMethod) withObject:url     withObject:nil];
 }
 #pragma mark - delegate
-- (void)onSocket:(AsyncSocket *)sock didConnectToHost:(NSString *)host port:(UInt16)port
+- (void)onSocket:(AsyncSocket*)sock didConnectToHost:(NSString *)host port:(UInt16)port
 {
     UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已成功连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
     [view show];
@@ -314,14 +266,6 @@
     NSData *fileTypeData=[recvData subdataWithRange:NSMakeRange(0,4)];
     Byte *byte=(Byte*)[fileTypeData bytes];
     FileType = [self byteToInt: byte offset:0];
-    if(FileType==0)
-    {
-        fileType=@"文本文件";
-    }
-    else
-    {
-        fileType=@"图像文件";
-    }
     //获取数据包长度
     NSData *fileLengthData=[recvData subdataWithRange:NSMakeRange(4, 4)];
     Byte *byte1=(Byte*)[fileLengthData bytes];
@@ -350,7 +294,9 @@
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
         NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadTXT%d.txt",i]];
         [dataStr writeToFile:dataFile atomically:YES encoding:NSUTF8StringEncoding error:nil];
-        
+        //获取沙盒下所有文件
+        fileArr=[self getAllFileNames:@""];
+        [tableView1 reloadData];
     }
     //JPEG图像文件存储
     else if(FileType==1)
@@ -366,6 +312,10 @@
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
         NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadJPG%d.jpg",j]];
         [imageData writeToFile:dataFile atomically:YES];
+        //写入tableView
+        //获取沙盒下所有文件
+        fileArr=[self getAllFileNames:@""];
+        [tableView1 reloadData];
         
     }
     //PNG图像文件存储
@@ -382,12 +332,14 @@
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
         NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadPNG%d.jpg",k]];
         [pngImageData writeToFile:dataFile atomically:YES];
+        //写入tableView
+        //获取沙盒下所有文件
+        fileArr=[self getAllFileNames:@""];
+        [tableView1 reloadData];
     }
     //清空recvData
     [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
     [recvData setLength:0];
-    
-        
     }
     [sock readDataWithTimeout:-1 tag:0];
     
@@ -443,12 +395,68 @@
 }
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 5;
+   if(fileArr.count>0)
+   {
+       return fileArr.count;
+   }
+    else
+    {
+        return 0;
+    }
 }
 -(UITableViewCell*)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell *cell=[[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@""];
-    cell.textLabel.text=@"123";
+    if(fileArr.count>0)
+    {
+        cell.textLabel.text=fileArr[indexPath.row];
+    }
     return cell;
 }
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
+    NSString *dataFile = [docPath stringByAppendingPathComponent:fileArr[indexPath.row]];
+    NSURL *url=[NSURL fileURLWithPath:dataFile];
+    //预览文档
+     self.controller = [UIDocumentInteractionController  interactionControllerWithURL:url];
+    self.controller.delegate=self;
+    [ self.controller presentPreviewAnimated:YES];
+}
+
+#pragma mark -UIDocumentControllerDelegate
+
+- (UIViewController*)documentInteractionControllerViewControllerForPreview:(UIDocumentInteractionController*)controller
+{
+    return self;
+}
+- (UIView*)documentInteractionControllerViewForPreview:(UIDocumentInteractionController*)controller
+{
+    return self.view;
+}
+- (CGRect)documentInteractionControllerRectForPreview:(UIDocumentInteractionController*)controller
+{
+    
+   return self.view.frame;
+}
+//点击预览窗口的“Done”(完成)按钮时调用
+
+- (void)documentInteractionControllerDidEndPreview:(UIDocumentInteractionController*)_controller
+{
+    [_controller dismissPreviewAnimated:YES];
+}
+#pragma mark - 获取沙盒下是所有文件
+-(NSArray *) getAllFileNames:(NSString *)dirName
+{
+    // 获得此程序的沙盒路径
+    NSArray *patchs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    
+    // 获取Documents路径
+    // [patchs objectAtIndex:0]
+    NSString *documentsDirectory = [patchs objectAtIndex:0];
+    
+    NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentsDirectory error:nil];
+    return files;
+}
+
 @end
