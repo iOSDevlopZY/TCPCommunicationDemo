@@ -419,9 +419,9 @@
     NSString *dataFile = [docPath stringByAppendingPathComponent:fileArr[indexPath.row]];
     NSURL *url=[NSURL fileURLWithPath:dataFile];
     //预览文档
-     self.controller = [UIDocumentInteractionController  interactionControllerWithURL:url];
+    self.controller = [UIDocumentInteractionController  interactionControllerWithURL:url];
     self.controller.delegate=self;
-    [ self.controller presentPreviewAnimated:YES];
+    [self.controller presentPreviewAnimated:YES];
 }
 
 #pragma mark -UIDocumentControllerDelegate
