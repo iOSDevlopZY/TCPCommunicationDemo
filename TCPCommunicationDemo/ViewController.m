@@ -326,7 +326,6 @@
     NSData *fileLengthData=[recvData subdataWithRange:NSMakeRange(4, 4)];
     Byte *byte1=(Byte*)[fileLengthData bytes];
     Length = [self byteToInt: byte1 offset:0];
-    
     //数据包接受完毕发送回执
     if(recvData.length==Length)
     {
@@ -387,10 +386,11 @@
     //清空recvData
     [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
     [recvData setLength:0];
-   
+    
         
     }
     [sock readDataWithTimeout:-1 tag:0];
+    
    
 }
 
