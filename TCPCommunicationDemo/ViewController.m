@@ -67,6 +67,8 @@
     int j;
     //重复PNG文件计数器
     int k;
+    //重复DCM文件计数器
+    int m;
   
 }
 //文件预览器
@@ -99,7 +101,10 @@
     j=jpgIndex.intValue;
     //取出png文件索引值
     NSString *pngIndex=[defaults objectForKey:@"pngIndex"];
-    k=pngIndex.intValue;
+    m=pngIndex.intValue;
+    //取出dcm文件索引值
+    NSString *dcmIndex=[defaults objectForKey:@"dcmIndex"];
+    m=dcmIndex.intValue;
 }
 #pragma mark - 初始化Mutable
 - (void)initMutable
@@ -345,7 +350,7 @@
         
     }
     //PNG图像文件存储
-    else
+    else if(FileType==2)
     {
         k++;
         NSString *index=[NSString stringWithFormat:@"%d",k];
@@ -357,6 +362,25 @@
         //获取documents目录
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
         NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadPNG%d.png",k]];
+        [pngImageData writeToFile:dataFile atomically:YES];
+        //写入tableView
+        //获取沙盒下所有文件
+        fileArr=[self getAllFileNames:@""];
+        [tableView1 reloadData];
+    }
+    //.dcm图像文件存储
+    else
+    {
+        m++;
+        NSString *index=[NSString stringWithFormat:@"%d",m];
+        //保存文件索引值
+        NSUserDefaults *defaults=[NSUserDefaults standardUserDefaults];
+        [defaults setObject:index forKey:@"dcmIndex"];
+        [defaults synchronize];
+        pngImageData=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+        //获取documents目录
+        NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
+        NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadDCM%d.dcm",m]];
         [pngImageData writeToFile:dataFile atomically:YES];
         //写入tableView
         //获取沙盒下所有文件
