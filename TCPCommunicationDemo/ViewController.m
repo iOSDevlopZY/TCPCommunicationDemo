@@ -35,6 +35,7 @@
     
     UIButton *connectBtn;
     UIButton *commandLabel;
+    UIButton *disConnectBtn;
     
     UILabel *recommandLabel;
     
@@ -135,8 +136,18 @@
     connectBtn.layer.cornerRadius=4;
     connectBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
     [connectBtn addTarget:self action:@selector(connectSocket) forControlEvents:UIControlEventTouchUpInside];
+    
+    
+    disConnectBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.32, screenWidth*0.6, screenHeight*0.05)];
+    [disConnectBtn setTitle:@"断开连接" forState:UIControlStateNormal];
+    [disConnectBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
+    disConnectBtn.layer.borderWidth=1;
+    disConnectBtn.layer.cornerRadius=4;
+    disConnectBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
+    [disConnectBtn addTarget:self action:@selector(disconnectSocket) forControlEvents:UIControlEventTouchUpInside];
+    disConnectBtn.enabled=false;
 
-    recommandLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.35, screenWidth*0.8, screenHeight*0.03)];
+    recommandLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.38, screenWidth*0.8, screenHeight*0.03)];
     recommandLabel.text=@"应用沙盒目录下的文件";
     recommandLabel.textAlignment=NSTextAlignmentCenter;
     
@@ -146,7 +157,7 @@
     [commandLabel setTitle:@"点击这里跳转Wifi界面,连接名为XX的Wifi" forState:UIControlStateNormal];
     [commandLabel addTarget:self action:@selector(pushWifi) forControlEvents:UIControlEventTouchUpInside];
 
-    tableView1=[[UITableView alloc]initWithFrame:CGRectMake(0, screenHeight*0.4, screenWidth, screenHeight*0.5)];
+    tableView1=[[UITableView alloc]initWithFrame:CGRectMake(0, screenHeight*0.42, screenWidth, screenHeight*0.48)];
     tableView1.delegate=self;
     tableView1.dataSource=self;
 
@@ -157,6 +168,7 @@
     [self.view addSubview:infoTF];
     [self.view addSubview:portTF];
     [self.view addSubview:connectBtn];
+     [self.view addSubview:disConnectBtn];
     [self.view addSubview:commandLabel];
     [self.view addSubview:recommandLabel];
     [self.view addSubview:tableView1];
@@ -207,6 +219,7 @@
 #pragma mark - 连接socket
 - (void)connectSocket
 {
+    
     if((IPAddressLabel.text==nil||[IPAddressLabel.text isEqualToString:@""])||(portTF.text==nil||[portTF.text isEqualToString:@""]))
     {
         UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"错误" message:@"IP地址和端口号不能为空" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
@@ -226,8 +239,24 @@
     {
         [connectBtn setTitle:@"连接中" forState:UIControlStateNormal];
         [connectBtn setEnabled:false];
+        [disConnectBtn setEnabled:true];
     }
     }
+    
+}
+#pragma mark - 断开连接socket
+- (void)disconnectSocket
+{
+    [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
+    [connectBtn setEnabled:true];
+    [disConnectBtn setEnabled:false];
+    NSString *str =@"Client Did disconnected";
+    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
+    [asyncSocket writeData:StrData withTimeout:-1 tag:0];
+    [asyncSocket readDataWithTimeout:-1 tag:0];
+    UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已断开连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
+    [view show];
+
 }
 #pragma mark - 跳转WIFI界面
 - (void)pushWifi
@@ -248,8 +277,6 @@
     [connectBtn setEnabled:false];
     //连接成功时必须要写这个方法，否则无法接收服务器数据
     [sock readDataWithTimeout:-1 tag:0];
-
-   
 }
 
 - (void)onSocket:(AsyncSocket *)sock didSecure:(BOOL)flag
@@ -259,8 +286,7 @@
 }
 -(void) onSocket:(AsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
-   
-   
+    
     [recvData appendData:data];
     //获取数据包文件类型
     NSData *fileTypeData=[recvData subdataWithRange:NSMakeRange(0,4)];
@@ -359,10 +385,9 @@
     NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
     [sock writeData:StrData withTimeout:-1 tag:0];
     [sock readDataWithTimeout:-1 tag:0];
-    UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已断开连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
-    [view show];
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
     [connectBtn setEnabled:true];
+    [disConnectBtn setEnabled:false];
 }
 -(int)byteToInt:(Byte*)byteArr offset:(int)offset
 {
