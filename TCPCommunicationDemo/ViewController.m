@@ -8,18 +8,9 @@
 
 #import "ViewController.h"
 #import "MBProgressHUD+NJ.h"
-#import "Reachability.h"
-#import <SystemConfiguration/CaptiveNetwork.h>
-#include <unistd.h>
-#include <sys/sysctl.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <net/if.h>
-#include <net/if_dl.h>
-#include <netinet/in.h>
-#include <ifaddrs.h>
-#include <sys/socket.h>
 #import "AsyncSocket.h"
+#import "CheckNetClass.h"
+#import "FileOperationClass.h"
 
 #define screenWidth [UIScreen mainScreen].bounds.size.width
 #define screenHeight [UIScreen mainScreen].bounds.size.height
@@ -27,34 +18,18 @@
 {
     UILabel *portLabel;
     UILabel *IPAddressLabel;
-    
     NSTimer *timer;
-    
     UITextField *infoTF;
     UITextField *portTF;
-    
     UIButton *connectBtn;
     UIButton *commandLabel;
     UIButton *disConnectBtn;
-    
     UILabel *recommandLabel;
-    
-    
     UITableView *tableView1;
     //是否连上标志
     BOOL isConnect;
-    //WIFI名称
-    NSString *SSID;
-    //连接的WIFI的IP地址
-    NSString *wifiIP;
     NSMutableData *recvData;
     NSArray *fileArr;
-    //文本文件数据
-    NSData *textData;
-    //JPEG图像文件数据
-    NSData *imageData;
-    //PNG图像文件数据
-    NSData *pngImageData;
     //文件类型
     int FileType;
     //文件名
@@ -65,8 +40,7 @@
     AsyncSocket *asyncSocket;
     //文件长度
     int fileNameLengthNum;
-
-  
+    FileOperationClass *operationClass;
 }
 //文件预览器
 @property(nonatomic,strong)UIDocumentInteractionController *controller;
@@ -75,14 +49,15 @@
 @implementation ViewController
 
 - (void)viewDidLoad {
-    [self initMutable];
-    //获取沙盒下所有文件
-    fileArr=[self getAllFileNames:@""];
-    [super viewDidLoad];
-    isConnect=false;
-    [self setUpUI];
-    [self checkNet];
     
+    [super viewDidLoad];
+    [self initMutable];
+    [self setUpUI];
+    isConnect=false;
+    [CheckNetClass checkNet:isConnect];
+    operationClass=[[FileOperationClass alloc]init];
+    //获取沙盒下所有文件
+    fileArr=[operationClass getAllFileNames:@""];
 }
 #pragma mark - 初始化Mutable
 - (void)initMutable
@@ -120,7 +95,6 @@
     connectBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
     [connectBtn addTarget:self action:@selector(connectSocket) forControlEvents:UIControlEventTouchUpInside];
     
-    
     disConnectBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.32, screenWidth*0.6, screenHeight*0.05)];
     [disConnectBtn setTitle:@"断开连接" forState:UIControlStateNormal];
     [disConnectBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
@@ -144,8 +118,6 @@
     tableView1.delegate=self;
     tableView1.dataSource=self;
 
-    
-    
     [self.view addSubview:portLabel];
     [self.view addSubview:IPAddressLabel];
     [self.view addSubview:infoTF];
@@ -157,47 +129,10 @@
     [self.view addSubview:tableView1];
 
 }
-#pragma mark - 检查网络
-- (void)checkNet{
-    //每隔5S检测一遍网络
-    if(isConnect==false)
-    {
-        timer=[NSTimer timerWithTimeInterval:5 target:self selector:@selector(fetchSSIDInfo) userInfo:nil repeats:YES];
-        [[NSRunLoop mainRunLoop]addTimer:timer forMode:NSDefaultRunLoopMode];
-    }
-}
-#pragma mark - 获取WIFI名称
-- (id)fetchSSIDInfo {
-    NSArray *ifs = (__bridge_transfer id)CNCopySupportedInterfaces();
-    id info = nil;
-    for (NSString *ifnam in ifs) {
-        info = (__bridge_transfer id)CNCopyCurrentNetworkInfo((__bridge CFStringRef)ifnam);
-        SSID=info[@"SSID"];
-        if (info && [info count]) { break; }
-    }
-    return info;
-}
-#pragma mark - 获取本机IP地址
-- (NSString *)getIPAddress {
-    NSString *address = @"error";
-    struct ifaddrs *interfaces = NULL;
-    struct ifaddrs *temp_addr = NULL;
-    int success = 0;
-    success = getifaddrs(&interfaces);
-    if (success == 0) {
-        temp_addr = interfaces;
-        while(temp_addr != NULL) {
-            if(temp_addr->ifa_addr->sa_family == AF_INET) {
-                if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
-                    address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
-                }
-            }
-            temp_addr = temp_addr->ifa_next;
-        }
-    }
-    freeifaddrs(interfaces);
-    wifiIP=address;
-    return address;
+#pragma mark - 连接wifi
+- (void)pushWifi
+{
+    [CheckNetClass pushWifi];
 }
 #pragma mark - 连接socket
 - (void)connectSocket
@@ -214,16 +149,16 @@
     [asyncSocket enablePreBuffering];
     NSError *err = nil;
     if(![asyncSocket connectToHost:infoTF.text onPort:portTF.text.intValue error:&err])
-    {
+        {
                 UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP错误" message:@"未能连接制定的IP地址和端口号" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
-        [view show];
-    }
+                [view show];
+        }
     else
-    {
-        [connectBtn setTitle:@"连接中" forState:UIControlStateNormal];
-        [connectBtn setEnabled:false];
-        [disConnectBtn setEnabled:true];
-    }
+        {
+                [connectBtn setTitle:@"连接中" forState:UIControlStateNormal];
+                [connectBtn setEnabled:false];
+                [disConnectBtn setEnabled:true];
+        }
     }
     
 }
@@ -234,23 +169,13 @@
     [connectBtn setEnabled:true];
     [disConnectBtn setEnabled:false];
     NSString *str =@"Client Did disconnected";
-    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
-    [asyncSocket writeData:StrData withTimeout:-1 tag:0];
+    [self sendCallBack:str];
     [asyncSocket readDataWithTimeout:-1 tag:0];
     UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已断开连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
     [view show];
 
 }
-#pragma mark - 跳转WIFI界面
-- (void)pushWifi
-{
-   
-    NSString * defaultWork = [self getDefaultWork];
-    NSString * wifiMethod = [self getWifiMethod];
-    NSURL*url=[NSURL URLWithString:@"Prefs:root=WIFI"];
-    Class LSApplicationWorkspace = NSClassFromString(@"LSApplicationWorkspace");
-    [[LSApplicationWorkspace  performSelector:NSSelectorFromString(defaultWork)]   performSelector:NSSelectorFromString(wifiMethod) withObject:url     withObject:nil];
-}
+
 #pragma mark - delegate
 - (void)onSocket:(AsyncSocket*)sock didConnectToHost:(NSString *)host port:(UInt16)port
 {
@@ -269,88 +194,57 @@
 }
 -(void) onSocket:(AsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
-    
     [recvData appendData:data];
-    //获取数据包文件类型
-    NSData *fileTypeData=[recvData subdataWithRange:NSMakeRange(0,4)];
-    Byte *byte=(Byte*)[fileTypeData bytes];
-    FileType = [self byteToInt: byte offset:0];
-    //获取数据包长度
-    NSData *fileLengthData=[recvData subdataWithRange:NSMakeRange(4, 4)];
-    Byte *byte1=(Byte*)[fileLengthData bytes];
-    Length = [self byteToInt: byte1 offset:0];
+    //获取文件类型
+    FileType=[operationClass readDataType:recvData];
+    //获取文件长度
+    Length=[operationClass readDataLength:recvData];
     //获取文件名长度
-    NSData *fileNameLength=[recvData subdataWithRange:NSMakeRange(8, 4)];
-    Byte *byte2=(Byte*)[fileNameLength bytes];
-    fileNameLengthNum= [self byteToInt: byte2 offset:0];
+    fileNameLengthNum=[operationClass readDataNameLength:recvData];
     //数据包接受完毕发送回执
     if(recvData.length==Length)
     {
-    
-    NSString *str =@"Client Has Received Message";
-    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
-    [sock writeData:StrData withTimeout:-1 tag:0];
-    
-    //获取文件名
-    NSData *fileNameData =[recvData subdataWithRange:NSMakeRange(12, fileNameLengthNum)];
-    fileName=[[NSString alloc]initWithData:fileNameData encoding:NSUTF8StringEncoding];
+        //读取文件名
+        fileName=[operationClass readDataFileName:recvData];
     //文本文件存储
     if(FileType==0)
     {
-        textData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
-        NSString *dataStr=[[NSString alloc]initWithData:textData encoding:NSUTF8StringEncoding];
-        //获取documents目录
-        NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
-        [dataStr writeToFile:dataFile atomically:YES encoding:NSUTF8StringEncoding error:nil];
+        [operationClass writeTxtFile:recvData];
         //获取沙盒下所有文件
-        fileArr=[self getAllFileNames:@""];
+        fileArr=[operationClass getAllFileNames:@""];
         [tableView1 reloadData];
     }
     //JPEG图像文件存储
     else if(FileType==1)
     {
-        imageData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
-        //获取documents目录
-        NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
-        [imageData writeToFile:dataFile atomically:YES];
-        //写入tableView
+        [operationClass writeJPGFile:recvData];
         //获取沙盒下所有文件
-        fileArr=[self getAllFileNames:@""];
+        fileArr=[operationClass getAllFileNames:@""];
         [tableView1 reloadData];
         
     }
     //PNG图像文件存储
     else if(FileType==2)
     {
-       
-        pngImageData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
-        //获取documents目录
-        NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
-        [pngImageData writeToFile:dataFile atomically:YES];
-        //写入tableView
+        [operationClass writePNGFile:recvData];
         //获取沙盒下所有文件
-        fileArr=[self getAllFileNames:@""];
+        fileArr=[operationClass getAllFileNames:@""];
         [tableView1 reloadData];
     }
     //.dcm图像文件存储
     else
     {
-        pngImageData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
-        //获取documents目录
-        NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
-        [pngImageData writeToFile:dataFile atomically:YES];
-        //写入tableView
+        [operationClass writeDMIFile:recvData];
         //获取沙盒下所有文件
-        fileArr=[self getAllFileNames:@""];
+        fileArr=[operationClass getAllFileNames:@""];
         [tableView1 reloadData];
     }
     //清空recvData
     [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
     [recvData setLength:0];
+    //发送回执
+    NSString *str =@"Client Has Received Message";
+    [self sendCallBack:str];
     }
     [sock readDataWithTimeout:-1 tag:0];
     
@@ -360,43 +254,17 @@
 - (void)onSocket:(AsyncSocket *)sock willDisconnectWithError:(NSError *)err
 {
     NSString *str =@"Client Will disconnected With Error";
-    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
-    [sock writeData:StrData withTimeout:-1 tag:0];
+    [self sendCallBack:str];
     [sock readDataWithTimeout:-1 tag:0];
 }
 - (void)onSocketDidDisconnect:(AsyncSocket *)sock
 {
     NSString *str =@"Client Did disconnected";
-    NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
-    [sock writeData:StrData withTimeout:-1 tag:0];
+    [self sendCallBack:str];;
     [sock readDataWithTimeout:-1 tag:0];
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
     [connectBtn setEnabled:true];
     [disConnectBtn setEnabled:false];
-}
--(int)byteToInt:(Byte*)byteArr offset:(int)offset
-{
-    int value;
-    value =       (int) ((byteArr[offset]   & 0xFF)
-                         | ((byteArr[offset+1] & 0xFF)<<8)
-                         | ((byteArr[offset+2] & 0xFF)<<16)
-                         | ((byteArr[offset+3] & 0xFF)<<24));
-    return value;
-}
-
--(NSString *) getDefaultWork{
-    NSData *dataOne = [NSData dataWithBytes:(unsigned char []){0x64,0x65,0x66,0x61,0x75,0x6c,0x74,0x57,0x6f,0x72,0x6b,0x73,0x70,0x61,0x63,0x65} length:16];
-    NSString *method = [[NSString alloc] initWithData:dataOne encoding:NSASCIIStringEncoding];
-    return method;
-}
-
--(NSString *) getWifiMethod{
-    NSData *dataOne = [NSData dataWithBytes:(unsigned char []){0x6f, 0x70, 0x65, 0x6e, 0x53, 0x65, 0x6e, 0x73, 0x69,0x74, 0x69,0x76,0x65,0x55,0x52,0x4c} length:16];
-    NSString *keyone = [[NSString alloc] initWithData:dataOne encoding:NSASCIIStringEncoding];
-    NSData *dataTwo = [NSData dataWithBytes:(unsigned char []){0x77,0x69,0x74,0x68,0x4f,0x70,0x74,0x69,0x6f,0x6e,0x73} length:11];
-    NSString *keytwo = [[NSString alloc] initWithData:dataTwo encoding:NSASCIIStringEncoding];
-    NSString *method = [NSString stringWithFormat:@"%@%@%@%@",keyone,@":",keytwo,@":"];
-    return method;
 }
 #pragma mark- TableViewDelegate
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -425,9 +293,8 @@
 }
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *dataFile = [docPath stringByAppendingPathComponent:fileArr[indexPath.row]];
-    NSURL *url=[NSURL fileURLWithPath:dataFile];
+    NSInteger i=indexPath.row;
+    NSURL *url=[operationClass previewFileURL:fileArr :i];
     //预览文档
     self.controller = [UIDocumentInteractionController  interactionControllerWithURL:url];
     self.controller.delegate=self;
@@ -449,24 +316,14 @@
     
    return self.view.frame;
 }
-//点击预览窗口的“Done”(完成)按钮时调用
-
 - (void)documentInteractionControllerDidEndPreview:(UIDocumentInteractionController*)_controller
 {
     [_controller dismissPreviewAnimated:YES];
 }
-#pragma mark - 获取沙盒下是所有文件
--(NSArray *) getAllFileNames:(NSString *)dirName
+#pragma mark -发送回执
+- (void)sendCallBack:(NSString*)callBack
 {
-    // 获得此程序的沙盒路径
-    NSArray *patchs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    
-    // 获取Documents路径
-    // [patchs objectAtIndex:0]
-    NSString *documentsDirectory = [patchs objectAtIndex:0];
-    
-    NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentsDirectory error:nil];
-    return files;
+    NSData *StrData = [NSData dataWithBytes:[callBack UTF8String] length:[callBack length]];
+    [asyncSocket writeData:StrData withTimeout:-1 tag:0];
 }
-
 @end
