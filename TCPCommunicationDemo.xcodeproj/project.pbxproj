@@ -138,11 +138,8 @@
 		0C7E8FCF1E84B8DF00F527AC /* TCPCommunicationDemo */ = {
 			isa = PBXGroup;
 			children = (
+				0CA841411E949BFA008444CC /* Class */,
 				0CD967081E8507650005877A /* TCPCommunicationDemo.entitlements */,
-				0CA8413B1E948A75008444CC /* CheckNetClass.h */,
-				0CA8413C1E948A75008444CC /* CheckNetClass.m */,
-				0CA8413E1E94905D008444CC /* FileOperationClass.h */,
-				0CA8413F1E94905D008444CC /* FileOperationClass.m */,
 				0C7E8FD31E84B8DF00F527AC /* AppDelegate.h */,
 				0C7E8FD41E84B8DF00F527AC /* AppDelegate.m */,
 				0C7E8FD61E84B8DF00F527AC /* ViewController.h */,
@@ -222,6 +219,17 @@
 				0C7E90171E84CD2800F527AC /* AsyncUdpSocket.m */,
 			);
 			path = AsyncSocket;
+			sourceTree = "<group>";
+		};
+		0CA841411E949BFA008444CC /* Class */ = {
+			isa = PBXGroup;
+			children = (
+				0CA8413B1E948A75008444CC /* CheckNetClass.h */,
+				0CA8413C1E948A75008444CC /* CheckNetClass.m */,
+				0CA8413E1E94905D008444CC /* FileOperationClass.h */,
+				0CA8413F1E94905D008444CC /* FileOperationClass.m */,
+			);
+			name = Class;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
