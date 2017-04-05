@@ -318,7 +318,7 @@
 }
 - (void)documentInteractionControllerDidEndPreview:(UIDocumentInteractionController*)_controller
 {
-    [_controller dismissPreviewAnimated:YES];
+    [self.controller dismissPreviewAnimated:YES];
 }
 #pragma mark -发送回执
 - (void)sendCallBack:(NSString*)callBack
