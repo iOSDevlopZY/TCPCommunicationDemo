@@ -57,18 +57,15 @@
     NSData *pngImageData;
     //文件类型
     int FileType;
+    //文件名
+    NSString *fileName;
     NSString *fileType;
     int Length;
     //连接SOCKET
     AsyncSocket *asyncSocket;
-    //重复文件计数器
-    int i;
-    //重复JPEG文件计数器
-    int j;
-    //重复PNG文件计数器
-    int k;
-    //重复DCM文件计数器
-    int m;
+    //文件长度
+    int fileNameLengthNum;
+
   
 }
 //文件预览器
@@ -78,8 +75,6 @@
 @implementation ViewController
 
 - (void)viewDidLoad {
-    
-    [self setupIndex];
     [self initMutable];
     //获取沙盒下所有文件
     fileArr=[self getAllFileNames:@""];
@@ -88,23 +83,6 @@
     [self setUpUI];
     [self checkNet];
     
-}
-#pragma mark - 文件索引
-- (void)setupIndex
-{
-    //取出txt文件索引值
-    NSUserDefaults *defaults=[NSUserDefaults standardUserDefaults];
-    NSString *txtIndex=[defaults objectForKey:@"txtIndex"];
-    i=txtIndex.intValue;
-    //取出jpeg文件索引值
-    NSString *jpgIndex=[defaults objectForKey:@"jpgIndex"];
-    j=jpgIndex.intValue;
-    //取出png文件索引值
-    NSString *pngIndex=[defaults objectForKey:@"pngIndex"];
-    m=pngIndex.intValue;
-    //取出dcm文件索引值
-    NSString *dcmIndex=[defaults objectForKey:@"dcmIndex"];
-    m=dcmIndex.intValue;
 }
 #pragma mark - 初始化Mutable
 - (void)initMutable
@@ -301,6 +279,10 @@
     NSData *fileLengthData=[recvData subdataWithRange:NSMakeRange(4, 4)];
     Byte *byte1=(Byte*)[fileLengthData bytes];
     Length = [self byteToInt: byte1 offset:0];
+    //获取文件名长度
+    NSData *fileNameLength=[recvData subdataWithRange:NSMakeRange(8, 4)];
+    Byte *byte2=(Byte*)[fileNameLength bytes];
+    fileNameLengthNum= [self byteToInt: byte2 offset:0];
     //数据包接受完毕发送回执
     if(recvData.length==Length)
     {
@@ -308,22 +290,18 @@
     NSString *str =@"Client Has Received Message";
     NSData *StrData = [NSData dataWithBytes:[str UTF8String] length:[str length]];
     [sock writeData:StrData withTimeout:-1 tag:0];
+    
+    //获取文件名
+    NSData *fileNameData =[recvData subdataWithRange:NSMakeRange(12, fileNameLengthNum)];
+    fileName=[[NSString alloc]initWithData:fileNameData encoding:NSUTF8StringEncoding];
     //文本文件存储
     if(FileType==0)
     {
-        i++;
-        NSString *index=[NSString stringWithFormat:@"%d",i];
-        //保存文件索引值
-        NSUserDefaults *defaults=[NSUserDefaults standardUserDefaults];
-        [defaults setObject:index forKey:@"txtIndex"];
-        [defaults synchronize];
-        
-        
-        textData=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+        textData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
         NSString *dataStr=[[NSString alloc]initWithData:textData encoding:NSUTF8StringEncoding];
         //获取documents目录
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadTXT%d.txt",i]];
+        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
         [dataStr writeToFile:dataFile atomically:YES encoding:NSUTF8StringEncoding error:nil];
         //获取沙盒下所有文件
         fileArr=[self getAllFileNames:@""];
@@ -332,16 +310,10 @@
     //JPEG图像文件存储
     else if(FileType==1)
     {
-        j++;
-        NSString *index=[NSString stringWithFormat:@"%d",j];
-        //保存文件索引值
-        NSUserDefaults *defaults=[NSUserDefaults standardUserDefaults];
-        [defaults setObject:index forKey:@"jpgIndex"];
-        [defaults synchronize];
-        imageData=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+        imageData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
         //获取documents目录
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadJPG%d.jpg",j]];
+        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
         [imageData writeToFile:dataFile atomically:YES];
         //写入tableView
         //获取沙盒下所有文件
@@ -352,16 +324,11 @@
     //PNG图像文件存储
     else if(FileType==2)
     {
-        k++;
-        NSString *index=[NSString stringWithFormat:@"%d",k];
-        //保存文件索引值
-        NSUserDefaults *defaults=[NSUserDefaults standardUserDefaults];
-        [defaults setObject:index forKey:@"pngIndex"];
-        [defaults synchronize];
-        pngImageData=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+       
+        pngImageData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
         //获取documents目录
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadPNG%d.png",k]];
+        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
         [pngImageData writeToFile:dataFile atomically:YES];
         //写入tableView
         //获取沙盒下所有文件
@@ -371,16 +338,10 @@
     //.dcm图像文件存储
     else
     {
-        m++;
-        NSString *index=[NSString stringWithFormat:@"%d",m];
-        //保存文件索引值
-        NSUserDefaults *defaults=[NSUserDefaults standardUserDefaults];
-        [defaults setObject:index forKey:@"dcmIndex"];
-        [defaults synchronize];
-        pngImageData=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+        pngImageData=[recvData subdataWithRange:NSMakeRange(12+fileNameLengthNum, recvData.length-12-fileNameLengthNum)];
         //获取documents目录
         NSString *docPath=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *dataFile = [docPath stringByAppendingPathComponent:[NSString stringWithFormat:@"DownLoadDCM%d.dcm",m]];
+        NSString *dataFile = [docPath stringByAppendingPathComponent:fileName];
         [pngImageData writeToFile:dataFile atomically:YES];
         //写入tableView
         //获取沙盒下所有文件
