@@ -81,7 +81,7 @@
     
     infoTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 64, screenWidth*0.4, screenHeight*0.05)];
     infoTF.borderStyle=UITextBorderStyleRoundedRect;
-    infoTF.text=@"192.168.191.1";
+    infoTF.text=@"192.168.159.1";
     
     portTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 108, screenWidth*0.4, screenHeight*0.05)];
     portTF.borderStyle=UITextBorderStyleRoundedRect;
