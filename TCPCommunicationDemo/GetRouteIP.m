@@ -49,9 +49,7 @@
                     // Get NSString from C String //ifa_addr
                     //ifa->ifa_dstaddr is the broadcast address, which explains the "255's"
                     //                    address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_dstaddr)->sin_addr)];
-                    
                     address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
-                    
                     //routerIP----192.168.1.255 广播地址
                     //NSLog(@"broadcast address--%@",[NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_dstaddr)->sin_addr)]);
                     //--192.168.1.106 本机地址
