@@ -11,6 +11,7 @@
 #import "AsyncSocket.h"
 #import "CheckNetClass.h"
 #import "FileOperationClass.h"
+#import "GetRouteIP.h"
 
 #define screenWidth [UIScreen mainScreen].bounds.size.width
 #define screenHeight [UIScreen mainScreen].bounds.size.height
@@ -58,6 +59,20 @@
     operationClass=[[FileOperationClass alloc]init];
     //获取沙盒下所有文件
     fileArr=[operationClass getAllFileNames:@""];
+    [self routeIP];
+}
+#pragma mark - 获取routeIP
+- (void)routeIP
+{
+    NSTimer *timerGet=[NSTimer timerWithTimeInterval:2 target:self selector:@selector(getRouteIP) userInfo:nil repeats:YES];
+    [[NSRunLoop mainRunLoop]addTimer:timerGet forMode:NSRunLoopCommonModes];
+}
+- (void)getRouteIP
+{
+    //获取路由IP地址
+    NSString *routeIP=[GetRouteIP getRouteIP];
+    infoTF.text=routeIP;
+    infoTF.font=[UIFont systemFontOfSize:14];
 }
 #pragma mark - 初始化Mutable
 - (void)initMutable
@@ -81,7 +96,6 @@
     
     infoTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 64, screenWidth*0.4, screenHeight*0.05)];
     infoTF.borderStyle=UITextBorderStyleRoundedRect;
-    infoTF.text=@"192.168.159.1";
     
     portTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 108, screenWidth*0.4, screenHeight*0.05)];
     portTF.borderStyle=UITextBorderStyleRoundedRect;

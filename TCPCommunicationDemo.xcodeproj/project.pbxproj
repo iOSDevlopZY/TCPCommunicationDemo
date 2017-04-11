@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0C73BF7D1E9C699600C2F44C /* GetRouteIP.m in Sources */ = {isa = PBXBuildFile; fileRef = 0C73BF7C1E9C699600C2F44C /* GetRouteIP.m */; };
+		0C73BF821E9C6A8100C2F44C /* getgateway.c in Sources */ = {isa = PBXBuildFile; fileRef = 0C73BF7F1E9C6A8100C2F44C /* getgateway.c */; };
 		0C7E8FD21E84B8DF00F527AC /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 0C7E8FD11E84B8DF00F527AC /* main.m */; };
 		0C7E8FD51E84B8DF00F527AC /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0C7E8FD41E84B8DF00F527AC /* AppDelegate.m */; };
 		0C7E8FD81E84B8DF00F527AC /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0C7E8FD71E84B8DF00F527AC /* ViewController.m */; };
@@ -46,6 +48,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0C73BF7B1E9C699600C2F44C /* GetRouteIP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GetRouteIP.h; sourceTree = "<group>"; };
+		0C73BF7C1E9C699600C2F44C /* GetRouteIP.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GetRouteIP.m; sourceTree = "<group>"; };
+		0C73BF7F1E9C6A8100C2F44C /* getgateway.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = getgateway.c; sourceTree = "<group>"; };
+		0C73BF801E9C6A8100C2F44C /* getgateway.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = getgateway.h; sourceTree = "<group>"; };
+		0C73BF811E9C6A8100C2F44C /* route.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = route.h; sourceTree = "<group>"; };
 		0C7E8FCD1E84B8DF00F527AC /* TCPCommunicationDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TCPCommunicationDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C7E8FD11E84B8DF00F527AC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		0C7E8FD31E84B8DF00F527AC /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -111,9 +118,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0C73BF7E1E9C6A8100C2F44C /* RouteAddress */ = {
+			isa = PBXGroup;
+			children = (
+				0C73BF7F1E9C6A8100C2F44C /* getgateway.c */,
+				0C73BF801E9C6A8100C2F44C /* getgateway.h */,
+				0C73BF811E9C6A8100C2F44C /* route.h */,
+			);
+			path = RouteAddress;
+			sourceTree = "<group>";
+		};
 		0C7E8FC41E84B8DF00F527AC = {
 			isa = PBXGroup;
 			children = (
+				0C73BF7E1E9C6A8100C2F44C /* RouteAddress */,
 				0C7E90131E84CD2800F527AC /* AsyncSocket */,
 				0C7E900F1E84BA8B00F527AC /* Reachability */,
 				0C7E90061E84BA3200F527AC /* MBProgressHUD */,
@@ -228,6 +246,8 @@
 				0CA8413C1E948A75008444CC /* CheckNetClass.m */,
 				0CA8413E1E94905D008444CC /* FileOperationClass.h */,
 				0CA8413F1E94905D008444CC /* FileOperationClass.m */,
+				0C73BF7B1E9C699600C2F44C /* GetRouteIP.h */,
+				0C73BF7C1E9C699600C2F44C /* GetRouteIP.m */,
 			);
 			name = Class;
 			sourceTree = "<group>";
@@ -387,6 +407,8 @@
 				0CA8413D1E948A75008444CC /* CheckNetClass.m in Sources */,
 				0C7E8FD21E84B8DF00F527AC /* main.m in Sources */,
 				0C7E90181E84CD2800F527AC /* AsyncSocket.m in Sources */,
+				0C73BF7D1E9C699600C2F44C /* GetRouteIP.m in Sources */,
+				0C73BF821E9C6A8100C2F44C /* getgateway.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
