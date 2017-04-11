@@ -123,7 +123,7 @@
     [self.view addSubview:infoTF];
     [self.view addSubview:portTF];
     [self.view addSubview:connectBtn];
-     [self.view addSubview:disConnectBtn];
+    [self.view addSubview:disConnectBtn];
     [self.view addSubview:commandLabel];
     [self.view addSubview:recommandLabel];
     [self.view addSubview:tableView1];
