@@ -11,11 +11,13 @@
 #import "AsyncSocket.h"
 #import "CheckNetClass.h"
 #import "FileOperationClass.h"
+#import "QRCodeViewController.h"
+#import <AVFoundation/AVFoundation.h>
 #import "GetRouteIP.h"
 
 #define screenWidth [UIScreen mainScreen].bounds.size.width
 #define screenHeight [UIScreen mainScreen].bounds.size.height
-@interface ViewController ()<UITableViewDelegate,UITableViewDataSource,UIDocumentInteractionControllerDelegate>
+@interface ViewController ()<UITableViewDelegate,UITableViewDataSource,UIDocumentInteractionControllerDelegate,AVCaptureMetadataOutputObjectsDelegate,QRCodeViewControllerDelegate>
 {
     UILabel *portLabel;
     UILabel *IPAddressLabel;
@@ -25,6 +27,7 @@
     UIButton *connectBtn;
     UIButton *commandLabel;
     UIButton *disConnectBtn;
+    UIButton *QRCodeBtn;
     UILabel *recommandLabel;
     UITableView *tableView1;
     //是否连上标志
@@ -42,6 +45,8 @@
     //文件长度
     int fileNameLengthNum;
     FileOperationClass *operationClass;
+    AVCaptureSession *session;
+    AVCaptureVideoPreviewLayer *layer;
 }
 //文件预览器
 @property(nonatomic,strong)UIDocumentInteractionController *controller;
@@ -59,20 +64,46 @@
     operationClass=[[FileOperationClass alloc]init];
     //获取沙盒下所有文件
     fileArr=[operationClass getAllFileNames:@""];
-    [self routeIP];
 }
-#pragma mark - 获取routeIP
-- (void)routeIP
+#pragma mark - 初始化摄像头类
+-(void)initAVSession
 {
-    NSTimer *timerGet=[NSTimer timerWithTimeInterval:2 target:self selector:@selector(getRouteIP) userInfo:nil repeats:YES];
-    [[NSRunLoop mainRunLoop]addTimer:timerGet forMode:NSRunLoopCommonModes];
+    bool isAuthorized=[self privacy];
+    if(isAuthorized==true)
+    {
+        QRCodeViewController *qrVc = [[QRCodeViewController alloc] init];
+        qrVc.delegate = self;
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:qrVc];
+        
+        // 设置扫描完成后的回调
+        __weak typeof (self) wSelf = self;
+        [qrVc setCompletionWithBlock:^(NSString *resultAsString) {
+            [wSelf.navigationController popViewControllerAnimated:YES];
+            //        [[[UIAlertView alloc] initWithTitle:@"" message:resultAsString delegate:self cancelButtonTitle:@"好的" otherButtonTitles: nil] show];
+        }];
+        
+        [self presentViewController:nav animated:YES completion:nil];
+        
+    }
+    else
+    {
+        
+        UIAlertView *alert =[[UIAlertView alloc]initWithTitle:@"权限提醒" message:@"请在iPhone的“设置”-“隐私”-“相机”功能中，找到“XXXX”打开相机访问权限" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles: nil];
+        [alert show];
+    }
+    
 }
-- (void)getRouteIP
+#pragma mark - 判断相机权限
+-(bool)privacy
 {
-    //获取路由IP地址
-    NSString *routeIP=[GetRouteIP getRouteIP];
-    infoTF.text=routeIP;
-    infoTF.font=[UIFont systemFontOfSize:14];
+    NSString *mediaType = AVMediaTypeVideo;
+    
+    AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:mediaType];
+    
+    if(authStatus == AVAuthorizationStatusRestricted || authStatus == AVAuthorizationStatusDenied){
+        return false;
+    }
+    return true;
 }
 #pragma mark - 初始化Mutable
 - (void)initMutable
@@ -94,12 +125,16 @@
     portLabel.textAlignment=NSTextAlignmentLeft;
     portLabel.text=@"连接端口号";
     
-    infoTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 64, screenWidth*0.4, screenHeight*0.05)];
+    infoTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.4, 64, screenWidth*0.4, screenHeight*0.05)];
     infoTF.borderStyle=UITextBorderStyleRoundedRect;
     
-    portTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.5, 108, screenWidth*0.4, screenHeight*0.05)];
+    portTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.4, 108, screenWidth*0.4, screenHeight*0.05)];
     portTF.borderStyle=UITextBorderStyleRoundedRect;
     portTF.text=@"5050";
+    
+    QRCodeBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.85, 64, screenWidth*0.1, screenHeight*0.05)];
+    [QRCodeBtn setImage:[UIImage imageNamed:@"QRCode"] forState:UIControlStateNormal];
+    [QRCodeBtn addTarget:self action:@selector(scan) forControlEvents:UIControlEventTouchUpInside];
     
     connectBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.25, screenWidth*0.6, screenHeight*0.05)];
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
@@ -138,10 +173,17 @@
     [self.view addSubview:portTF];
     [self.view addSubview:connectBtn];
     [self.view addSubview:disConnectBtn];
+    [self.view addSubview:QRCodeBtn];
     [self.view addSubview:commandLabel];
     [self.view addSubview:recommandLabel];
     [self.view addSubview:tableView1];
 
+}
+#pragma mark - 扫描二维码
+- (void)scan
+{
+    //初始化摄像头类
+    [self initAVSession];
 }
 #pragma mark - 连接wifi
 - (void)pushWifi
@@ -151,13 +193,11 @@
 #pragma mark - 连接socket
 - (void)connectSocket
 {
-    
     if((IPAddressLabel.text==nil||[IPAddressLabel.text isEqualToString:@""])||(portTF.text==nil||[portTF.text isEqualToString:@""]))
     {
         UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"错误" message:@"IP地址和端口号不能为空" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
         [view show];
     }
- 
     else{
     asyncSocket = [[AsyncSocket alloc] initWithDelegate:self];
     [asyncSocket enablePreBuffering];
@@ -189,7 +229,15 @@
     [view show];
 
 }
-
+#pragma mark - AVCaptureMetadataOutputObjectsDelegate
+- (void)reader:(QRCodeViewController *)reader didScanResult:(NSString *)result
+{
+    
+    [self dismissViewControllerAnimated:YES completion:^{
+        infoTF.text=result;
+        infoTF.font=[UIFont systemFontOfSize:15];
+    }];
+}
 #pragma mark - delegate
 - (void)onSocket:(AsyncSocket*)sock didConnectToHost:(NSString *)host port:(UInt16)port
 {

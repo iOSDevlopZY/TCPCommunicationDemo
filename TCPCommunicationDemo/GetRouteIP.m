@@ -25,9 +25,6 @@
     struct ifaddrs *temp_addr = NULL;
     int success = 0;
     
-    
-    
-    
     // retrieve the current interfaces - returns 0 on success
     success = getifaddrs(&interfaces);
     if (success == 0)

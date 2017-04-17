@@ -28,6 +28,8 @@
 		0CA8413D1E948A75008444CC /* CheckNetClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 0CA8413C1E948A75008444CC /* CheckNetClass.m */; };
 		0CA841401E94905D008444CC /* FileOperationClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 0CA8413F1E94905D008444CC /* FileOperationClass.m */; };
 		0CD967071E8507650005877A /* ExternalAccessory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0CD967061E8507650005877A /* ExternalAccessory.framework */; };
+		0CE351DB1EA47B270077999A /* QRCodeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0CE351D91EA47B270077999A /* QRCodeViewController.m */; };
+		0CE351DC1EA47B270077999A /* QRCodeViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0CE351DA1EA47B270077999A /* QRCodeViewController.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +90,9 @@
 		0CA8413F1E94905D008444CC /* FileOperationClass.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileOperationClass.m; sourceTree = "<group>"; };
 		0CD967061E8507650005877A /* ExternalAccessory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExternalAccessory.framework; path = System/Library/Frameworks/ExternalAccessory.framework; sourceTree = SDKROOT; };
 		0CD967081E8507650005877A /* TCPCommunicationDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TCPCommunicationDemo.entitlements; sourceTree = "<group>"; };
+		0CE351D81EA47B270077999A /* QRCodeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QRCodeViewController.h; sourceTree = "<group>"; };
+		0CE351D91EA47B270077999A /* QRCodeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QRCodeViewController.m; sourceTree = "<group>"; };
+		0CE351DA1EA47B270077999A /* QRCodeViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = QRCodeViewController.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +167,9 @@
 				0C7E8FD41E84B8DF00F527AC /* AppDelegate.m */,
 				0C7E8FD61E84B8DF00F527AC /* ViewController.h */,
 				0C7E8FD71E84B8DF00F527AC /* ViewController.m */,
+				0CE351D81EA47B270077999A /* QRCodeViewController.h */,
+				0CE351D91EA47B270077999A /* QRCodeViewController.m */,
+				0CE351DA1EA47B270077999A /* QRCodeViewController.xib */,
 				0C7E8FD91E84B8DF00F527AC /* Main.storyboard */,
 				0C7E8FDC1E84B8DF00F527AC /* Assets.xcassets */,
 				0C7E8FDE1E84B8DF00F527AC /* LaunchScreen.storyboard */,
@@ -373,6 +381,7 @@
 				0C7E900D1E84BA3200F527AC /* MBProgressHUD.bundle in Resources */,
 				0C7E8FDD1E84B8DF00F527AC /* Assets.xcassets in Resources */,
 				0C7E8FDB1E84B8DF00F527AC /* Main.storyboard in Resources */,
+				0CE351DC1EA47B270077999A /* QRCodeViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,6 +414,7 @@
 				0C7E8FD51E84B8DF00F527AC /* AppDelegate.m in Sources */,
 				0C7E90121E84BA8B00F527AC /* Reachability.m in Sources */,
 				0CA8413D1E948A75008444CC /* CheckNetClass.m in Sources */,
+				0CE351DB1EA47B270077999A /* QRCodeViewController.m in Sources */,
 				0C7E8FD21E84B8DF00F527AC /* main.m in Sources */,
 				0C7E90181E84CD2800F527AC /* AsyncSocket.m in Sources */,
 				0C73BF7D1E9C699600C2F44C /* GetRouteIP.m in Sources */,
