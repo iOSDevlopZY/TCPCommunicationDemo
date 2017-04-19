@@ -234,7 +234,10 @@
 {
     
     [self dismissViewControllerAnimated:YES completion:^{
-        infoTF.text=result;
+        NSData *decodedData = [[NSData alloc] initWithBase64EncodedString:result options:0];
+        NSString *decodedString = [[NSString alloc] initWithData:decodedData encoding:NSUTF8StringEncoding];
+        infoTF.text=decodedString;
+        NSLog(@">>>>>>>>>>>>>>>>>>>>>>>%@",decodedString);
         infoTF.font=[UIFont systemFontOfSize:15];
     }];
 }
