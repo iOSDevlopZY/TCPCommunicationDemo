@@ -29,6 +29,12 @@
     UIButton *disConnectBtn;
     UIButton *QRCodeBtn;
     UILabel *recommandLabel;
+    UILabel *patientName;
+    UILabel *patientNameInfo;
+    UILabel *patientAge;
+    UILabel *patientAgeInfo;
+    UILabel *patientSex;
+    UILabel *patientSexInfo;
     UITableView *tableView1;
     //是否连上标志
     BOOL isConnect;
@@ -127,6 +133,7 @@
     
     infoTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.4, 64, screenWidth*0.4, screenHeight*0.05)];
     infoTF.borderStyle=UITextBorderStyleRoundedRect;
+    infoTF.text=@"192.168.159.1";
     
     portTF=[[UITextField alloc]initWithFrame:CGRectMake(screenWidth*0.4, 108, screenWidth*0.4, screenHeight*0.05)];
     portTF.borderStyle=UITextBorderStyleRoundedRect;
@@ -152,18 +159,38 @@
     disConnectBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
     [disConnectBtn addTarget:self action:@selector(disconnectSocket) forControlEvents:UIControlEventTouchUpInside];
     disConnectBtn.enabled=false;
-
-    recommandLabel=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.38, screenWidth*0.8, screenHeight*0.03)];
-    recommandLabel.text=@"应用沙盒目录下的文件";
-    recommandLabel.textAlignment=NSTextAlignmentCenter;
     
     commandLabel=[[UIButton alloc]initWithFrame:CGRectMake(0, screenHeight*0.9, screenWidth, screenHeight*0.1)];
     [commandLabel setFont:[UIFont systemFontOfSize:14]];
     commandLabel.backgroundColor=[UIColor blackColor];
     [commandLabel setTitle:@"点击这里跳转Wifi界面,连接名为XX的Wifi" forState:UIControlStateNormal];
     [commandLabel addTarget:self action:@selector(pushWifi) forControlEvents:UIControlEventTouchUpInside];
+    
+    patientName=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.42, screenWidth*0.3, screenHeight*0.03)];
+    patientName.text=@"患者姓名";
+    patientName.textAlignment=NSTextAlignmentCenter;
+    
+    patientNameInfo=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.6, screenHeight*0.42, screenWidth*0.3, screenHeight*0.03)];
+    patientNameInfo.text=@"";
+    patientNameInfo.textAlignment=NSTextAlignmentCenter;
+    
+    patientAge=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.47, screenWidth*0.3, screenHeight*0.03)];
+    patientAge.text=@"患者年龄";
+    patientAge.textAlignment=NSTextAlignmentCenter;
+    
+    patientAgeInfo=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.6, screenHeight*0.47, screenWidth*0.3, screenHeight*0.03)];
+    patientAgeInfo.text=@"";
+    patientAgeInfo.textAlignment=NSTextAlignmentCenter;
+    
+    patientSex=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.1, screenHeight*0.52, screenWidth*0.3, screenHeight*0.03)];
+    patientSex.text=@"患者性别";
+    patientSex.textAlignment=NSTextAlignmentCenter;
+    
+    patientSexInfo=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.6, screenHeight*0.52, screenWidth*0.3, screenHeight*0.03)];
+    patientSexInfo.text=@"";
+    patientSexInfo.textAlignment=NSTextAlignmentCenter;
 
-    tableView1=[[UITableView alloc]initWithFrame:CGRectMake(0, screenHeight*0.42, screenWidth, screenHeight*0.48)];
+    tableView1=[[UITableView alloc]initWithFrame:CGRectMake(0, screenHeight*0.62, screenWidth, screenHeight*0.28)];
     tableView1.delegate=self;
     tableView1.dataSource=self;
 
@@ -175,7 +202,12 @@
     [self.view addSubview:disConnectBtn];
     [self.view addSubview:QRCodeBtn];
     [self.view addSubview:commandLabel];
-    [self.view addSubview:recommandLabel];
+    [self.view addSubview:patientName];
+    [self.view addSubview:patientNameInfo];
+    [self.view addSubview:patientAge];
+    [self.view addSubview:patientAgeInfo];
+    [self.view addSubview:patientSex];
+    [self.view addSubview:patientSexInfo];
     [self.view addSubview:tableView1];
 
 }
@@ -234,10 +266,8 @@
 {
     
     [self dismissViewControllerAnimated:YES completion:^{
-        NSData *decodedData = [[NSData alloc] initWithBase64EncodedString:result options:0];
+        NSData *decodedData = [[NSData alloc] initWithBase64EncodedString:result options:0];    
         NSString *decodedString = [[NSString alloc] initWithData:decodedData encoding:NSUTF8StringEncoding];
-        infoTF.text=decodedString;
-        NSLog(@">>>>>>>>>>>>>>>>>>>>>>>%@",decodedString);
         infoTF.font=[UIFont systemFontOfSize:15];
     }];
 }
@@ -260,50 +290,20 @@
 -(void) onSocket:(AsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
     [recvData appendData:data];
-    //获取文件类型
-    FileType=[operationClass readDataType:recvData];
     //获取文件长度
     Length=[operationClass readDataLength:recvData];
-    //获取文件名长度
-    fileNameLengthNum=[operationClass readDataNameLength:recvData];
+    //获取文件类型
+    FileType=[operationClass readDataType:recvData];
     //数据包接受完毕发送回执
-    if(recvData.length==Length)
+    if(recvData.length-4==Length)
     {
-        //读取文件名
-        fileName=[operationClass readDataFileName:recvData];
-    //文本文件存储
-    if(FileType==0)
-    {
-        [operationClass writeTxtFile:recvData];
-        //获取沙盒下所有文件
+        NSData *data=[operationClass getJson:recvData];
+        NSDictionary *patientInfo = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
+        patientNameInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Name"]];
+        patientAgeInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Age"]];
+        patientSexInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Gender"]];
         fileArr=[operationClass getAllFileNames:@""];
         [tableView1 reloadData];
-    }
-    //JPEG图像文件存储
-    else if(FileType==1)
-    {
-        [operationClass writeJPGFile:recvData];
-        //获取沙盒下所有文件
-        fileArr=[operationClass getAllFileNames:@""];
-        [tableView1 reloadData];
-        
-    }
-    //PNG图像文件存储
-    else if(FileType==2)
-    {
-        [operationClass writePNGFile:recvData];
-        //获取沙盒下所有文件
-        fileArr=[operationClass getAllFileNames:@""];
-        [tableView1 reloadData];
-    }
-    //.dcm图像文件存储
-    else
-    {
-        [operationClass writeDMIFile:recvData];
-        //获取沙盒下所有文件
-        fileArr=[operationClass getAllFileNames:@""];
-        [tableView1 reloadData];
-    }
     //清空recvData
     [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
     [recvData setLength:0];

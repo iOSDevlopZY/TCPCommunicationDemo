@@ -16,13 +16,9 @@
 -(NSArray *) getAllFileNames:(NSString *)dirName;
 -(int)readDataType:(NSMutableData*)recvData;
 -(int)readDataLength:(NSMutableData*)recvData;
--(int)readDataNameLength:(NSMutableData*)recvData;
--(NSString*)readDataFileName:(NSMutableData*)recvData;
+-(NSData*)getJson:(NSMutableData*)recvData;
 
--(void)writeTxtFile:(NSMutableData*)recvData;
--(void)writeJPGFile:(NSMutableData*)recvData;
--(void)writePNGFile:(NSMutableData*)recvData;
--(void)writeDMIFile:(NSMutableData*)recvData;
+
 
 -(NSURL*)previewFileURL:(NSArray*)fileArr:(NSInteger)index;
 @end
