@@ -28,6 +28,7 @@
     UIButton *commandLabel;
     UIButton *disConnectBtn;
     UIButton *QRCodeBtn;
+    UIButton *saveBtn;
     UILabel *recommandLabel;
     UILabel *patientName;
     UILabel *patientNameInfo;
@@ -189,7 +190,15 @@
     patientSexInfo=[[UILabel alloc]initWithFrame:CGRectMake(screenWidth*0.6, screenHeight*0.52, screenWidth*0.3, screenHeight*0.03)];
     patientSexInfo.text=@"";
     patientSexInfo.textAlignment=NSTextAlignmentCenter;
-
+    
+    saveBtn=[[UIButton alloc]initWithFrame:CGRectMake(screenWidth*0.2, screenHeight*0.55, screenWidth*0.6, screenHeight*0.05)];
+    [saveBtn setTitle:@"保存" forState:UIControlStateNormal];
+    [saveBtn setTitleColor:[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1] forState:UIControlStateNormal];
+    saveBtn.layer.borderWidth=1;
+    saveBtn.layer.cornerRadius=4;
+    saveBtn.layer.borderColor=[UIColor colorWithRed:50/255.0 green:147/255.0 blue:250/255.0f alpha:1].CGColor;
+    [saveBtn addTarget:self action:@selector(save) forControlEvents:UIControlEventTouchUpInside];
+    
     tableView1=[[UITableView alloc]initWithFrame:CGRectMake(0, screenHeight*0.62, screenWidth, screenHeight*0.28)];
     tableView1.delegate=self;
     tableView1.dataSource=self;
@@ -208,8 +217,19 @@
     [self.view addSubview:patientAgeInfo];
     [self.view addSubview:patientSex];
     [self.view addSubview:patientSexInfo];
+    [self.view addSubview:saveBtn];
     [self.view addSubview:tableView1];
 
+}
+#pragma mark - 发送JSON数据
+- (void)save
+{
+    NSDictionary *json = @{
+                           @"Type" :@"GetCurrentPatientExamination"
+                        };
+   
+    NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
+    [self sendCallBack:data];
 }
 #pragma mark - 扫描二维码
 - (void)scan
@@ -307,9 +327,6 @@
     //清空recvData
     [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
     [recvData setLength:0];
-    //发送回执
-    NSString *str =@"Client Has Received Message";
-    [self sendCallBack:str];
     }
     [sock readDataWithTimeout:-1 tag:0];
     
@@ -386,9 +403,9 @@
     [self.controller dismissPreviewAnimated:YES];
 }
 #pragma mark -发送回执
-- (void)sendCallBack:(NSString*)callBack
+- (void)sendCallBack:(NSData*)data
 {
-    NSData *StrData = [NSData dataWithBytes:[callBack UTF8String] length:[callBack length]];
-    [asyncSocket writeData:StrData withTimeout:-1 tag:0];
+    
+    [asyncSocket writeData:data withTimeout:-1 tag:0];
 }
 @end
