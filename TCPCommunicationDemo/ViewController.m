@@ -319,14 +319,21 @@
     {
         NSData *data=[operationClass getJson:recvData];
         NSDictionary *patientInfo = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
-        patientNameInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Name"]];
-        patientAgeInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Age"]];
-        patientSexInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Gender"]];
+        if([patientInfo[@"Type"] isEqualToString:@"Patientinfo"])
+        {
+            patientNameInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Name"]];
+            patientAgeInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Age"]];
+            patientSexInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Gender"]];
+        }
+        else if([patientInfo[@"Type"] isEqualToString:@"GetCurrentPatientExaminationReply"])
+        {
+            NSLog(@">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%@",patientInfo);
+        }
         fileArr=[operationClass getAllFileNames:@""];
         [tableView1 reloadData];
-    //清空recvData
-    [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
-    [recvData setLength:0];
+        //清空recvData
+        [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
+        [recvData setLength:0];
     }
     [sock readDataWithTimeout:-1 tag:0];
     
@@ -335,14 +342,10 @@
 
 - (void)onSocket:(AsyncSocket *)sock willDisconnectWithError:(NSError *)err
 {
-    NSString *str =@"Client Will disconnected With Error";
-    [self sendCallBack:str];
     [sock readDataWithTimeout:-1 tag:0];
 }
 - (void)onSocketDidDisconnect:(AsyncSocket *)sock
 {
-    NSString *str =@"Client Did disconnected";
-    [self sendCallBack:str];;
     [sock readDataWithTimeout:-1 tag:0];
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
     [connectBtn setEnabled:true];
