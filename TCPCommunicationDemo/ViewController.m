@@ -51,6 +51,7 @@
     AsyncSocket *asyncSocket;
     //文件长度
     int fileNameLengthNum;
+    NSString *fileNameStr;
     FileOperationClass *operationClass;
     AVCaptureSession *session;
     AVCaptureVideoPreviewLayer *layer;
@@ -86,7 +87,7 @@
         __weak typeof (self) wSelf = self;
         [qrVc setCompletionWithBlock:^(NSString *resultAsString) {
             [wSelf.navigationController popViewControllerAnimated:YES];
-            //        [[[UIAlertView alloc] initWithTitle:@"" message:resultAsString delegate:self cancelButtonTitle:@"好的" otherButtonTitles: nil] show];
+            
         }];
         
         [self presentViewController:nav animated:YES completion:nil];
@@ -274,8 +275,11 @@
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
     [connectBtn setEnabled:true];
     [disConnectBtn setEnabled:false];
-    NSString *str =@"Client Did disconnected";
-    [self sendCallBack:str];
+    NSDictionary *json = @{
+                           @"Type" :@"StopServer"
+                           };
+    NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
+    [self sendCallBack:data];
     [asyncSocket readDataWithTimeout:-1 tag:0];
     UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已断开连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
     [view show];
@@ -317,28 +321,52 @@
     //数据包接受完毕发送回执
     if(recvData.length-4==Length)
     {
-        NSData *data=[operationClass getJson:recvData];
-        NSDictionary *patientInfo = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
-        if([patientInfo[@"Type"] isEqualToString:@"Patientinfo"])
+       
+            NSData *data=[operationClass getJson:recvData];
+            NSDictionary *patientInfo = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
+            NSLog(@">>>>>>>>>>>>>>>>>>>>>>>>>%@",patientInfo);
+            //连接时获取病人导航信息
+            if([patientInfo[@"Type"] isEqualToString:@"Patientinfo"])
+            {
+                patientNameInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Name"]];
+                patientAgeInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Age"]];
+                patientSexInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Gender"]];
+            }
+            //发送接收文件请求
+            else if([patientInfo[@"Type"] isEqualToString:@"GetCurrentPatientExaminationReply"])
+            {
+                NSString *guid=patientInfo[@"Guid"];
+                NSDictionary *json = @{
+                                       @"Type" :@"StartSendPatientExamination",
+                                       @"Guid" :guid
+                                       };
+                NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
+                [self sendCallBack:data];
+                
+            }
+            else if([patientInfo[@"Type"] isEqualToString:@"StartSendFile"])
+            {
+                fileNameStr=patientInfo[@"FileName"];
+                
+            }
+        if(FileType==1)
         {
-            patientNameInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Name"]];
-            patientAgeInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Age"]];
-            patientSexInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Gender"]];
+            NSData *data=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+            NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+            NSString *strPath = [documentPath stringByAppendingPathComponent:fileNameStr];
+            [data writeToFile:strPath atomically:YES];
+            fileArr=[operationClass getAllFileNames:@""];
+            [tableView1 reloadData];
+            
         }
-        else if([patientInfo[@"Type"] isEqualToString:@"GetCurrentPatientExaminationReply"])
-        {
-            NSLog(@">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%@",patientInfo);
-        }
-        fileArr=[operationClass getAllFileNames:@""];
-        [tableView1 reloadData];
         //清空recvData
         [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
         [recvData setLength:0];
     }
     [sock readDataWithTimeout:-1 tag:0];
-    
-   
 }
+
+
 
 - (void)onSocket:(AsyncSocket *)sock willDisconnectWithError:(NSError *)err
 {
@@ -408,7 +436,6 @@
 #pragma mark -发送回执
 - (void)sendCallBack:(NSData*)data
 {
-    
     [asyncSocket writeData:data withTimeout:-1 tag:0];
 }
 @end
