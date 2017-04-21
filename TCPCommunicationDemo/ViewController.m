@@ -276,7 +276,7 @@
     [connectBtn setEnabled:true];
     [disConnectBtn setEnabled:false];
     NSDictionary *json = @{
-                           @"Type" :@"StopServer"
+                           @"Type" :@"ClientExit"
                            };
     NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
     [self sendCallBack:data];
@@ -314,58 +314,97 @@
 -(void) onSocket:(AsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
     [recvData appendData:data];
-    //获取文件长度
-    Length=[operationClass readDataLength:recvData];
-    //获取文件类型
-    FileType=[operationClass readDataType:recvData];
-    //数据包接受完毕发送回执
-    if(recvData.length-4==Length)
+    //长度指令没有收全
+    if(recvData.length<4)
     {
-       
-            NSData *data=[operationClass getJson:recvData];
-            NSDictionary *patientInfo = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
-            NSLog(@">>>>>>>>>>>>>>>>>>>>>>>>>%@",patientInfo);
-            //连接时获取病人导航信息
-            if([patientInfo[@"Type"] isEqualToString:@"Patientinfo"])
-            {
-                patientNameInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Name"]];
-                patientAgeInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Age"]];
-                patientSexInfo.text=[NSString stringWithFormat:@"%@",patientInfo[@"Gender"]];
-            }
-            //发送接收文件请求
-            else if([patientInfo[@"Type"] isEqualToString:@"GetCurrentPatientExaminationReply"])
-            {
-                NSString *guid=patientInfo[@"Guid"];
-                NSDictionary *json = @{
-                                       @"Type" :@"StartSendPatientExamination",
-                                       @"Guid" :guid
-                                       };
-                NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
-                [self sendCallBack:data];
-                
-            }
-            else if([patientInfo[@"Type"] isEqualToString:@"StartSendFile"])
-            {
-                fileNameStr=patientInfo[@"FileName"];
-                
-            }
-        if(FileType==1)
-        {
-            NSData *data=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
-            NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-            NSString *strPath = [documentPath stringByAppendingPathComponent:fileNameStr];
-            [data writeToFile:strPath atomically:YES];
-            fileArr=[operationClass getAllFileNames:@""];
-            [tableView1 reloadData];
-            
-        }
-        //清空recvData
-        [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
-        [recvData setLength:0];
+        [sock readDataWithTimeout:-1 tag:0];
+        [recvData appendData:data];
     }
-    [sock readDataWithTimeout:-1 tag:0];
+    //长度指令收全
+    else
+    {
+        //获取文件长度
+        Length=[operationClass readDataLength:recvData];
+        //类型指令没有收全
+        if(recvData.length<8)
+        {
+            [sock readDataWithTimeout:-1 tag:0];
+            [recvData appendData:data];
+        }
+        else
+        {
+            FileType=[operationClass readDataType:recvData];
+            //数据包没有收全
+            if(recvData.length<Length+4)
+            {
+                [sock readDataWithTimeout:-1 tag:0];
+                [recvData appendData:data];
+            }
+            //正好收全
+            else if(recvData.length==Length+4)
+            {
+                NSData *data=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+                [self paralize:data];
+                [recvData resetBytesInRange:NSMakeRange(0, [recvData length])];
+                [recvData setLength:0];
+                [sock readDataWithTimeout:-1 tag:0];
+            }
+            //超出
+            else
+            {
+                NSData* subData=[recvData subdataWithRange:NSMakeRange(8, Length+4)];
+                [self paralize:subData];
+                recvData=[[recvData subdataWithRange:NSMakeRange(Length+4, recvData.length-Length-4)] mutableCopy];
+                [sock readDataWithTimeout:-1 tag:0];
+                [recvData appendData:data];
+            }
+        }
+    }
+    
 }
 
+#pragma mark-解析文件
+- (void)paralize:(NSData*)data
+{
+    //指令文件
+    if(FileType==0)
+    {
+       
+        NSDictionary *dic=[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
+        NSLog(@">>>>>>>>>>>>>>>>%@",dic);
+        if([dic[@"Type"]isEqualToString:@"Patientinfo"])
+        {
+            patientNameInfo.text=dic[@"Name"];
+            patientAgeInfo.text=dic[@"Age"];
+            patientSexInfo.text=dic[@"Gender"];
+        }
+        else if([dic[@"Type"]isEqualToString:@"GetCurrentPatientExaminationReply"])
+        {
+            NSString *guid=dic[@"Guid"];
+            NSDictionary *json = @{
+                                   @"Type" :@"StartSendPatientExamination",
+                                   @"Guid":guid
+                                   };
+            NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
+            [self sendCallBack:data];
+        }
+        else if([dic[@"Type"]isEqualToString:@"StartSendFile"])
+        {
+            fileNameStr=dic[@"FileName"];
+        }
+    }
+    //数据文件
+    else
+    {
+        NSData *data=[recvData subdataWithRange:NSMakeRange(8, recvData.length-8)];
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *path = [paths objectAtIndex:0];
+        NSString *filePath = [path stringByAppendingPathComponent:fileNameStr];
+        [data writeToFile:filePath atomically:YES];
+        fileArr=[operationClass getAllFileNames:@""];
+        [tableView1 reloadData];
+    }
+}
 
 
 - (void)onSocket:(AsyncSocket *)sock willDisconnectWithError:(NSError *)err
