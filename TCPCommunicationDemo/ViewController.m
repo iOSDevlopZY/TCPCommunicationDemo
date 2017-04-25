@@ -241,6 +241,7 @@
 #pragma mark - 连接wifi
 - (void)pushWifi
 {
+    
     [CheckNetClass pushWifi];
 }
 #pragma mark - 连接socket
