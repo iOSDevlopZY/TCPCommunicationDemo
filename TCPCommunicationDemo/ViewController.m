@@ -82,20 +82,16 @@
         QRCodeViewController *qrVc = [[QRCodeViewController alloc] init];
         qrVc.delegate = self;
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:qrVc];
-        
         // 设置扫描完成后的回调
         __weak typeof (self) wSelf = self;
         [qrVc setCompletionWithBlock:^(NSString *resultAsString) {
             [wSelf.navigationController popViewControllerAnimated:YES];
-            
         }];
         
         [self presentViewController:nav animated:YES completion:nil];
-        
     }
     else
     {
-        
         UIAlertView *alert =[[UIAlertView alloc]initWithTitle:@"权限提醒" message:@"请在iPhone的“设置”-“隐私”-“相机”功能中，找到“XXXX”打开相机访问权限" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles: nil];
         [alert show];
     }
@@ -117,7 +113,6 @@
 - (void)initMutable
 {
     recvData=[NSMutableData data];
-    
 }
 #pragma mark - 设置UI
 - (void)setUpUI {
@@ -228,7 +223,6 @@
     NSDictionary *json = @{
                            @"Type" :@"GetCurrentPatientExamination"
                         };
-   
     NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
     [self sendCallBack:data];
 }
