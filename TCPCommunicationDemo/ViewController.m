@@ -223,6 +223,7 @@
     NSDictionary *json = @{
                            @"Type" :@"GetCurrentPatientExamination"
                         };
+    
     NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
     [self sendCallBack:data];
 }
@@ -270,10 +271,14 @@
     [connectBtn setTitle:@"连接" forState:UIControlStateNormal];
     [connectBtn setEnabled:true];
     [disConnectBtn setEnabled:false];
+    
     NSDictionary *json = @{
                            @"Type" :@"ClientExit"
                            };
     NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
+    int i=(int)data.length+4;
+    int type=0;
+    
     [self sendCallBack:data];
     [asyncSocket readDataWithTimeout:-1 tag:0];
     UIAlertView *view=[[UIAlertView alloc]initWithTitle:@"TCP连接" message:@"已断开连接" delegate:self cancelButtonTitle:@"好的" otherButtonTitles:nil , nil];
@@ -366,7 +371,6 @@
     {
        
         NSDictionary *dic=[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
-        NSLog(@">>>>>>>>>>>>>>>>%@",dic);
         if([dic[@"Type"]isEqualToString:@"Patientinfo"])
         {
             patientNameInfo.text=dic[@"Name"];
